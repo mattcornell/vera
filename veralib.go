@@ -7,6 +7,19 @@ import (
 	"time"
 )
 
+func empty(object interface{}) bool {
+    //First check normal definitions of empty
+    if object == nil {
+        return true
+    } else if object == "" {
+        return true
+    } else if object == false {
+        return true
+    }
+    return false
+}
+
+
 var mkstr = fmt.Sprintf 
 var CatNames = []string{"", "NA Interface", "Dimmable_Light", "Switch", "Security_Sensor", "HVAC", "Camera", "Door_Lock", "Window_Convering", "Remote_Control", "IR_Transmitter", "Generic_I_O", "Generic_Sensor", "Serial_Port", "Scene_Controller", "AV", "Humidity_Sensor", "Temperature_Sensor", "Light_Sensor", "Z-Wave_Interface", "Insteon_Interface", "Power_Meter", "Alarm_Panel", "Alarm_Partition", "Siren", "Weather", "Philips_Controller", "Appliance", "UV_Sensor", "Mouse_Trap", "Doorbell", "Keypad"}
 
@@ -176,7 +189,7 @@ type State struct {
 //fmt.Fprintf(os.Stderr, "%v", msg)
 //}
 
-func getVera(byteIn []byte) (x VeraRoot, err error) {
+func getRoot(byteIn []byte) (x VeraRoot, err error) {
 	err = xml.Unmarshal(byteIn, &x)
 	return
 }
@@ -186,7 +199,7 @@ func OpenFile (f string) (b []byte, err error) {
     x,err := os.Open(f)
     // open vera xml data file
     if err != nil {
-        errorExit(mkstr("Error opening data file: %s",err),1)
+        ErrorExit(mkstr("Error opening data file: %s",err),1)
     }
     DTime("Opened Vera xml file\n")
 	b,err = ioutil.ReadAll(x)

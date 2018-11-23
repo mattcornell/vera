@@ -5,21 +5,22 @@ import (
 	"os"
 )
 
-func configQuit(errorMsg string) {                                                                            
-    errOut(errorMsg)                                                                                          
+func configQuit(m string) {                                                                            
+	if ! empty(m) { errOut(mkstr("\n vera: %v",m)) }
     reg, err := regexp.Compile(`###h?i###(.*)\r?\n`)                                                          
     if err != nil {                                                                                           
-        errorExit("bad regexp compile",1)                                                                     
+        ErrorExit("bad regexp compile",1)                                                                     
     }                                                                                                         
     for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
         fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
     }                                                                                                         
     os.Exit(0)                                                                                                
 }                                                                                                             
-func InfoQuit() {                                                                                             
+func InfoQuit(m string) {                                                                                             
+	if ! empty(m) { errOut(mkstr("\nvera: %v",m)) }
     reg,err := regexp.Compile(`###h?i###(.*)\r?\n`)                                                           
     if err != nil {                                                                                           
-        errorExit("bad regexp compile",1)                                                                     
+        ErrorExit("bad regexp compile",1)                                                                     
     }                                                                                                         
     for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
         fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
@@ -27,10 +28,11 @@ func InfoQuit() {
     os.Exit(0)                                                                                                
 }                                                                                                             
                                                                                                               
-func HelpQuit() {                                                                                             
+func HelpQuit(m string) {                                                                                             
+	if ! empty(m) { errOut(mkstr("\n vera: %v",m)) }
     reg,err := regexp.Compile(`###h###(.*)\r?\n`)                                                             
     if err != nil {                                                                                           
-        errorExit("bad regexp compile",1)                                                                     
+        ErrorExit("bad regexp compile",1)                                                                     
     }                                                                                                         
     for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
         fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
@@ -38,12 +40,12 @@ func HelpQuit() {
     os.Exit(0)                                                                                                
 }                                             
 
-func errOut (msg string ){
-    fmt.Fprintf(os.Stderr, "%v", msg)
+func errOut (m string ){
+    fmt.Fprintf(os.Stderr, "%v", m)
 }
 
-func errorExit(msg string, err int) {
-    errOut(mkstr("error: %v\n", msg))
+func ErrorExit(m string, err int) {
+    errOut(mkstr("error: %v\n", m))
     os.Exit(err)
 }
 
@@ -90,7 +92,7 @@ helpMsg = `
 ###h###    vera options:
 ###h###        -q  = quiet 	run quiet except for errors
 ###h###        -r  = force refresh of vera status
-###h###        -v  = check version for update
+###h###        -u  = check version for update
 ###h###        -h  = print help
 ###h###        -i  = print more info with help
 ###i###        

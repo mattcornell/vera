@@ -11,7 +11,7 @@ var DebugOpt bool
 var DOut io.Writer = ioutil.Discard
 var	DebugTime   = time.Now()
 
-func DPause(this string) {
+func dPause(this string) {
 	if DebugOpt {
 		fmt.Fprintf(DOut, "%v", this)
 		var answer string
