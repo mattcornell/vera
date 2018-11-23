@@ -53,13 +53,23 @@ func empty(object interface{}) bool {
 
 func main () { 
 	vera.GetOptions() 
-	print("Cmd.do: %v %v\n", vera.Cmd.Do, vera.Cmd.Next)
-	print("Cfg.File: %v\n", vera.Cfg.File)
-	print("HelpOpt: %v\n",vera.HelpOpt)
-	print("InfoOpt: %v\n",vera.InfoOpt)
-	print("UpdateOpt: %v\n",vera.UpdateOpt)
-	print("DebugOpt: %v\n",vera.DebugOpt)
-	print("Cfg.File: %v\n",vera.Cfg.File)
+	vera.DMsg(mkstr("Cfg.File: %v\n", vera.Cfg.File))
+
+	vera.ReadCfg()
+	vera.DMsg(mkstr("Cmd.do: %v %v\n ", vera.Cmd.Do, vera.Cmd.Next))
+	vera.DMsg(mkstr("Cfg.Uri: %v\n ", vera.Cfg.Uri))
+	vera.DMsg(mkstr("Cfg.Host: %v\n ", vera.Cfg.Host))
+	vera.DMsg(mkstr("Cfg.Port: %v\n ", vera.Cfg.Port))
+	vera.DMsg(mkstr("HelpOpt: %v\n ",vera.HelpOpt))
+	vera.DMsg(mkstr("InfoOpt: %v\n ",vera.InfoOpt))
+	vera.DMsg(mkstr("UpdateOpt: %v\n ",vera.UpdateOpt))
+	vera.DMsg(mkstr("DebugOpt: %v\n ",vera.DebugOpt))
+	vera.DMsg(mkstr("Cfg.File: %v\n ",vera.Cfg.File))
+	vera.Cmd.Uri=vera.MakeUrl(vera.Cmd)
+	if empty(vera.Cmd.Uri) { 
+		vera.HelpQuit(mkstr("Command %v not found\n",vera.Cmd.Do))
+	}
+
 }
 
 
