@@ -5,17 +5,6 @@ import(
 	"os"
 	"strings"
 )
-var Cfg cfgType
-type cfgType struct { 
-	/*uri="http://vera.teamcornell.com:3480/data_request?id=user_data&output_format=xml&ns=1"
-host="vera.teamcornell.com"
-port="3480"*/
-Host string 
-Port string 
-File string "vera_cfg.toml"
-}
-
-
 
 
 var Cmd CmdType 
@@ -54,20 +43,21 @@ func GetOptions() {
 
     if (len(os.Args) > 1) && (len(flag.Args()) > 0) && (len(flag.Args()[0]) > 0) {
 		Cmd.Do = flag.Args()[0]
-		for _,v :=range flag.Args() { 
+		for _,v := range flag.Args() { 
 			Cmd.Next = append(Cmd.Next, v)
 		}
+
     } else {
-       Cmd.Do = "all"
+       Cmd.Do = "list"
    }
     if Cmd.Do=="help" {
-        HelpQuit()
+        HelpQuit("")
     }
     if HelpOpt || Cmd.Do=="help" {
-        HelpQuit()
+        HelpQuit("")
     }
     if InfoOpt || Cmd.Do=="info"{
-        InfoQuit()
+        InfoQuit("")
     }
     DMsg(mkstr("Args: %v \n", strings.Join(os.Args, " ")))
 } 

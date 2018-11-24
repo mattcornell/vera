@@ -1,4 +1,4 @@
- // vera.go: cli command for vera micasa home controller
+ // v.go: cli command for vera micasa home controller
 package main 
 /* date: 2018-11-09_100434
  * by: matt@teamcornell.com
@@ -7,7 +7,7 @@ package main
  */
 import ( 
 "fmt"
-//"os"
+"os"
 //"io/ioutil"
 //"net/http"
 //"path/filepath"
@@ -16,14 +16,14 @@ import (
 //"time"
 //"regexp"
 //"flag"
-//"text/tabwriter"
+"text/tabwriter"
 //"github.com/spf13/viper"
 //"io"
 //"regexp"
 //"bytes"
 //"gopkg.in/xmlpath.v2"
 //"encoding/xml"
-"code.teamcornell.com/vera"
+v "code.teamcornell.com/vera"
 )
 
 var (
@@ -37,7 +37,7 @@ const(
 	dateFormat string = "2006-01-01_150405.00000"
 )
 
-//var c vera.Cmd
+//var c v.Cmd
 
 func empty(object interface{}) bool {
 	//First check normal definitions of empty
@@ -51,25 +51,73 @@ func empty(object interface{}) bool {
 	return false
 }
 
-func main () { 
-	vera.GetOptions() 
-	vera.DMsg(mkstr("Cfg.File: %v\n", vera.Cfg.File))
+var t = new(tabwriter.Writer)
+var Root v.VeraRoot
 
-	vera.ReadCfg()
-	vera.DMsg(mkstr("Cmd.do: %v %v\n ", vera.Cmd.Do, vera.Cmd.Next))
-	vera.DMsg(mkstr("Cfg.Uri: %v\n ", vera.Cfg.Uri))
-	vera.DMsg(mkstr("Cfg.Host: %v\n ", vera.Cfg.Host))
-	vera.DMsg(mkstr("Cfg.Port: %v\n ", vera.Cfg.Port))
-	vera.DMsg(mkstr("HelpOpt: %v\n ",vera.HelpOpt))
-	vera.DMsg(mkstr("InfoOpt: %v\n ",vera.InfoOpt))
-	vera.DMsg(mkstr("UpdateOpt: %v\n ",vera.UpdateOpt))
-	vera.DMsg(mkstr("DebugOpt: %v\n ",vera.DebugOpt))
-	vera.DMsg(mkstr("Cfg.File: %v\n ",vera.Cfg.File))
-	vera.Cmd.Uri=vera.MakeUrl(vera.Cmd)
-	if empty(vera.Cmd.Uri) { 
-		vera.HelpQuit(mkstr("Command %v not found\n",vera.Cmd.Do))
+func main () { 
+	t.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug|tabwriter.AlignRight)
+	v.GetOptions() 
+	v.DMsg(mkstr("Cfg.File: %v\n", v.Cfg.File))
+
+	v.ReadCfg()
+	/* v.DMsg(mkstr("Cmd.do: %v %v\n ", v.Cmd.Do, v.Cmd.Next))
+	v.DMsg(mkstr("Cfg.Uri: %v\n ", v.Cfg.Uri))
+	v.DMsg(mkstr("Cfg.Host: %v\n ", v.Cfg.Host))
+	v.DMsg(mkstr("Cfg.Port: %v\n ", v.Cfg.Port))
+	v.DMsg(mkstr("HelpOpt: %v\n ",v.HelpOpt))
+	v.DMsg(mkstr("InfoOpt: %v\n ",v.InfoOpt))
+	v.DMsg(mkstr("UpdateOpt: %v\n ",v.UpdateOpt))
+	v.DMsg(mkstr("DebugOpt: %v\n ",v.DebugOpt))
+	v.DMsg(mkstr("Cfg.File: %v\n ",v.Cfg.File))
+	*/
+
+	data,err:=v.Cmd.Execute()
+	if err != nil {
+		v.ErrorExit(mkstr("Error fetching data %v",err),1)
 	}
 
+	v.Populate(data)
+
+	listDevs(v.Data.Devices)
+	listRooms(v.Data.Rooms)
+	listScene(v.Data.Scenes)
 }
 
 
+func listDevs (r v.DeviceList) {
+	fmt.Fprintf(t,"ID:\tName\tRoom\tType\n")
+	fmt.Fprintf(t,"---\t----\t----\t----\n")
+	for _,this:= range r {
+		fmt.Fprintf(t,"%v:\t%v\t%v\t%v\n",this.Id, this.Name, this.RoomName(),this.Category())
+	}
+	fmt.Fprintln(t,"\n")
+	t.Flush()
+}
+
+func listRooms (r v.RoomList) {
+	fmt.Fprintf(t,"ID:\tRoom Name\n")
+	fmt.Fprintf(t,"---\t---------\n")
+	for _,this:= range r {
+		fmt.Fprintf(t,"%v:\t%v\n",this.Id, this.Name)
+	}
+	fmt.Fprintln(t,"\n")
+	t.Flush()
+}
+
+func listUsers (r v.Users) {
+	fmt.Fprintf(t,"ID:\tUser\tType\n")
+	fmt.Fprintf(t,"---\t----\t----\n")
+	for _,this:= range r {
+		fmt.Fprintf(t,"%v:\t%v\t%v\n",this.Id, this.Name,this.Level)
+	}
+	t.Flush()
+}
+
+func listScene (r v.Scenes) {
+	fmt.Fprintf(t,"ID:\tName\tLast Run\n")
+	fmt.Fprintf(t,"---\t----\t--------\n")
+	for _,this:= range r {
+		fmt.Fprintf(t,"%v:\t%v\t%v\n",this.Id, this.Name, this.LastRun())
+	}
+	t.Flush()
+}

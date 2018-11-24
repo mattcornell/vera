@@ -22,7 +22,7 @@ func (c CmdType) MakeUri() {
 		return 
 }
 
-func (c CmdType) Fetch() (byteResults []byte, err error) {
+func (c CmdType) Execute() (byteResults []byte, err error) {
 	if empty(Cmd.Uri) { 
 		Cmd.MakeUri()
 	}
@@ -33,7 +33,7 @@ func (c CmdType) Fetch() (byteResults []byte, err error) {
 		req, err = http.NewRequest("POST", Cmd.Uri, nil)
 	}
     if err != nil {
-        DMsg(mkstr("fetchUrl: Error creating request: %v!\n", err))
+        DMsg(mkstr("Cmd.Execute: Error creating request: %v!\n", err))
         return nil, err
     }
 

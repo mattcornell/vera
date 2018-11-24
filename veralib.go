@@ -5,6 +5,7 @@ import (
 	"os"
 	"io/ioutil"
 	"time"
+	//"strconv"
 )
 
 func empty(object interface{}) bool {
@@ -20,14 +21,29 @@ func empty(object interface{}) bool {
 }
 
 
+const(
+      // personal preference for date format
+      dateTxt string = "2006-01-01_150405.00000"
+	  dateNice string = "2006-01-01 15:04:05"
+)
+
 var mkstr = fmt.Sprintf 
+
 var CatNames = []string{"", "NA Interface", "Dimmable_Light", "Switch", "Security_Sensor", "HVAC", "Camera", "Door_Lock", "Window_Convering", "Remote_Control", "IR_Transmitter", "Generic_I_O", "Generic_Sensor", "Serial_Port", "Scene_Controller", "AV", "Humidity_Sensor", "Temperature_Sensor", "Light_Sensor", "Z-Wave_Interface", "Insteon_Interface", "Power_Meter", "Alarm_Panel", "Alarm_Partition", "Siren", "Weather", "Philips_Controller", "Appliance", "UV_Sensor", "Mouse_Trap", "Doorbell", "Keypad"}
+
+var Data VeraRoot
+
+func Populate (b []byte) { 
+	err := xml.Unmarshal(b, &Data)
+	if err != nil { ErrorExit(mkstr("Error getting xml root data %v",err),1) }
+	return
+}
 
 type VeraRoot struct {
 	XMLName          xml.Name `xml:"root"`
 	Timezone         string   `xml:"timezone,attr"`
-	Firmware_version string   `xml:"firmware_version,attr"`
-	City_description string   `xml:"City_description,attr"`
+	FirmwareVersion string   `xml:"firmware_version,attr"`
+	CityDescription string   `xml:"City_description,attr"`
 	Model            string   `xml:"model,attr"`
 	Devices          []Device `xml:"devices>device"`
 	Scenes           []Scene  `xml:"scenes>scene"`
@@ -35,9 +51,14 @@ type VeraRoot struct {
 	Rooms            []Room   `xml:"rooms>room"`
 }
 
-func (v VeraRoot) RoomName(id string) string {
-	for _, this := range v.Rooms {
-		if this.Id == id {
+type DeviceList []Device
+type RoomList []Room
+type Users []User
+type Scenes []Scene
+
+func (d Device) RoomName() string {
+	for _, this := range Data.Rooms {
+		if this.Id == d.RoomNum {
 			return this.Name
 		}
 	}
@@ -61,28 +82,39 @@ type User struct {
 
 type Scene struct {
 	XMLName           xml.Name `xml:"scene"`
+	Id                int      `xml:"id,attr"`
 	Timestamps        int64    `xml:"Timestamp,attr"`
 	Name              string   `xml:"name,attr"`
 	Room              string   `xml:"room,attr"`
-	Triggers_operator string   `xml:"triggers_operator,attr"`
+	TriggersOperator string   `xml:"triggers_operator,attr"`
 	users             string   `xml:"users,attr"`
 	Paused            string   `xml:"paused,attr"`
 	ModeStatus        int      `xml:"modeStatus,attr"`
-	Id                int      `xml:"id,attr"`
-	Last_Run          int64    `xml:"last_run,attr"`
+	RawLastRun        int64    `xml:"last_run,attr"`
 	Trigger           Trigger  `xml:"triggers>trigger"`
 }
+
+func epochDate(s int64) string { 
+	t:= time.Unix(s,0).Format(dateNice)
+   return t
+}
+
+func (s Scene) LastRun () string{ 
+	//return  mkstr("%s",time.Unix(s.RawLastRun,0))
+	return  epochDate(s.RawLastRun)
+}
+
 type Trigger struct {
 	XMLName  xml.Name `xml:trigger`
 	Name     string   `xml:"name,attr"`
 	Enabled  int      `xml:"enabled,attr"`
 	Device   int      `xml:"device,attr"`
-	Last_Run int64    `xml:"last_run"`
+	LastRun int64    `xml:"last_run"`
 }
 
 //method
 func (d Device) Category() string {
-	return CatNames[d.Category_num]
+	return CatNames[d.CategoryNum]
 }
 
 /* func (s State) debug() {
@@ -91,7 +123,7 @@ func (d Device) Category() string {
 
 }*/
 /*func (d Device) debug() {
-	debugPrint(mkstr("device.id: %v d.Name: %v d.CatNum: %v", d.Id, d.Name, d.Category_num))
+	debugPrint(mkstr("device.id: %v d.Name: %v d.CatNum: %v", d.Id, d.Name, d.CategoryNum))
 	return
 
 }*/
@@ -106,7 +138,7 @@ func (d Device) value(V string) (r string) {
 
 func (d Device) StatusTxt() (r string) {
 	r = ""
-	switch d.Category_num {
+	switch d.CategoryNum {
 	case 2: //dimmable light
 		if d.value("LoadLevelStatus") == "0" {
 			r = "[Off]"
@@ -166,14 +198,14 @@ type Device struct {
 	XMLName         xml.Name `xml:"device"`
 	Id              int      `xml:"id,attr"`
 	Name            string   `xml:"name,attr"`
-	Device_type     string   `xml:"device_type,attr"`
-	Room            string   `xml:"room,attr"`
-	Device_file     string   `xml:"device_file,attr"`
-	Category_num    int      `xml:"category_num,attr"`
-	Subcategory_num string   `xml:"subcategory_num,attr"`
+	DeviceType     string   `xml:"device_type,attr"`
+	RoomNum            string   `xml:"room,attr"`
+	DeviceFile     string   `xml:"device_file,attr"`
+	CategoryNum    int      `xml:"category_num,attr"`
+	SubcategoryNum string   `xml:"subcategory_num,attr"`
 	Time_created    string   `xml:"time_created,attr"`
 	Invisible       string   `xml:"invisible,attr"`
-	Local_udn       string   `xml:"local_udn,attr"`
+	LocalUdn       string   `xml:"local_udn,attr"`
 	States          []State  `xml:"states>state"`
 }
 
@@ -185,11 +217,9 @@ type State struct {
 	Id       string   `xml:"value,id"`
 }
 
-//func stdErrOut (msg string ){
-//fmt.Fprintf(os.Stderr, "%v", msg)
-//}
 
-func getRoot(byteIn []byte) (x VeraRoot, err error) {
+
+func GetRoot(byteIn []byte) (x VeraRoot, err error) {
 	err = xml.Unmarshal(byteIn, &x)
 	return
 }
