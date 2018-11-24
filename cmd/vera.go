@@ -60,6 +60,11 @@ func main () {
 	v.DMsg(mkstr("Cfg.File: %v\n", v.Cfg.File))
 
 	v.ReadCfg()
+
+	print("host=%q\n",v.Cfg.Host)
+	print("port=%q\n",v.Cfg.Port)
+	print("uri=%q\n",v.Cfg.Uri)
+	print("lastPull=%v\n",v.Cfg.LastPull)
 	/* v.DMsg(mkstr("Cmd.do: %v %v\n ", v.Cmd.Do, v.Cmd.Next))
 	v.DMsg(mkstr("Cfg.Uri: %v\n ", v.Cfg.Uri))
 	v.DMsg(mkstr("Cfg.Host: %v\n ", v.Cfg.Host))

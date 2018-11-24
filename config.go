@@ -5,7 +5,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-var Cfg cfgType = cfgType{File:"config.toml"}
+var Cfg cfgType = cfgType{File:".config.toml",Cache:".lastpull"} 
 
 type cfgType struct {
 	/*uri="http://vera.teamcornell.com:3480/data_request?id=user_data&output_format=xml&ns=1"
@@ -15,11 +15,11 @@ type cfgType struct {
 	Port string
 	Uri  string
 	File string
+	Cache string
 	host string
 	port string
 	uri  string
-	lastPull  int64
-
+	LastPull  int64
 }
 
 
@@ -31,6 +31,7 @@ func ReadCfg () {
 	if empty(Cfg.Host) { Cfg.Host = Cfg.host }
 	if empty(Cfg.Port) { Cfg.Host = Cfg.port }
 	if empty(Cfg.Uri) { Cfg.Host = Cfg.uri }
+	if empty(Cfg.LastPull) { Cfg.LastPull = 0 }
 
 	//Cfg.Host=Cfg.host
 	//Cfg.Port=Cfg.port
