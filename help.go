@@ -3,7 +3,15 @@ package vera
 ###h### supporting package for vera command line client for Vera Micasa
 ###h### home controller
 */
-const ( helpMsg = `
+
+import (
+	"regexp"
+	"fmt"
+	"os"
+)
+
+const (
+helpMsg = `
 ###i### -------------------------------------------------
 ###v### date: 2018-11-09_100434
 ###i### https://teamcornell.com/code/vera/
@@ -63,13 +71,7 @@ const ( helpMsg = `
 ###i###   ./vera on 10 # turn on switch that is device num 10
 ###i###   ./vera dim 33 10  # Set dimmable light device 33 to 10 
 ###i###`
-) 
-import (
-	"regexp"
-	"fmt"
-	"os"
 )
-
 func configQuit(m string) {                                                                            
 	if ! empty(m) { errOut(mkstr("\n vera: %v",m)) }
     reg, err := regexp.Compile(`###h?i###(.*)\r?\n`)                                                          

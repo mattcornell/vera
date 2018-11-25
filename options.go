@@ -17,9 +17,9 @@ type CmdType struct {
 	Uri		string 
 	Body	[]byte
 }
-var ( 
+
+var (
 	HelpOpt, InfoOpt, UpdateOpt bool 
-//DebugOpt
 )
 
 func GetOptions() {

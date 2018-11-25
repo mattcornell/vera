@@ -2,6 +2,9 @@ package vera
 // config.go is the most rudimentary parser 
 
 import (
+	"os"
+	//"fmt"
+	"bufio"
 	"github.com/BurntSushi/toml"
 )
 
@@ -22,6 +25,19 @@ type cfgType struct {
 	LastPull  int64
 }
 
+func WriteCfg (){ 
+	//file,err := os.Open(Cfg.File) 
+	file,err := os.Open("myoutput") 
+	if err != nil { panic(err) }
+	f := bufio.NewWriter(file)
+		defer file.Close()
+		f.WriteString(mkstr("host=%q\n",Cfg.Host))
+		f.WriteString(mkstr("port=%q\n",Cfg.Port))
+		f.WriteString(mkstr("uri=%q\n",Cfg.Uri))
+		f.WriteString(mkstr("lastPull=%v\n",Cfg.LastPull))
+	dPause(mkstr("I tried to write the file %v\n",Cfg.File))
+		f.Flush()
+}
 
 func ReadCfg () { 
 	if _,err := toml.DecodeFile(Cfg.File,&Cfg)

@@ -61,6 +61,8 @@ func main () {
 
 	v.ReadCfg()
 
+	v.WriteCfg()
+
 	print("host=%q\n",v.Cfg.Host)
 	print("port=%q\n",v.Cfg.Port)
 	print("uri=%q\n",v.Cfg.Uri)
