@@ -6,7 +6,6 @@ import(
 	"strings"
 )
 
-
 var Cmd CmdType 
 
 type CmdType struct {
@@ -19,7 +18,7 @@ type CmdType struct {
 }
 
 var (
-	HelpOpt, InfoOpt, UpdateOpt bool 
+	HelpOpt, InfoOpt, RefreshOpt, UpdateOpt bool 
 )
 
 func GetOptions() {
@@ -30,6 +29,8 @@ func GetOptions() {
     flag.BoolVar(&InfoOpt, "i", false, "Help, but more so")
     flag.BoolVar(&UpdateOpt, "u", false, "Check for an updated version ")
     flag.BoolVar(&UpdateOpt, "update", false, "Check for an updated version")
+    flag.BoolVar(&RefreshOpt, "r", false, "Force a refresh of cached data")
+    flag.BoolVar(&RefreshOpt, "refresh", false, "Force a refresh of cached data")
     flag.BoolVar(&DebugOpt, "d", false, "Debug messages")
     flag.BoolVar(&DebugOpt, "debug", false, "Debug messages")
     flag.StringVar(&Cfg.File, "c", Cfg.File, "specify config file location ")

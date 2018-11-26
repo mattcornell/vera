@@ -1,5 +1,5 @@
- // v.go: cli command for vera micasa home controller
 package main 
+// vera.go: cli command for vera micasa home controller
 /* date: 2018-11-09_100434
  * by: matt@teamcornell.com
  * https://teamcornell.com/code/vera/
@@ -13,7 +13,7 @@ import (
 //"path/filepath"
 //"crypto/tls"
 //"strings"
-//"time"
+"time"
 //"regexp"
 //"flag"
 "text/tabwriter"
@@ -57,16 +57,10 @@ var Root v.VeraRoot
 func main () { 
 	t.Init(os.Stdout, 0, 0, 0, ' ', tabwriter.Debug|tabwriter.AlignRight)
 	v.GetOptions() 
-	v.DMsg(mkstr("Cfg.File: %v\n", v.Cfg.File))
-
 	v.ReadCfg()
+	v.DMsg(mkstr("Now Time: %v\n",time.Now().Unix()))
 
-	v.WriteCfg()
 
-	print("host=%q\n",v.Cfg.Host)
-	print("port=%q\n",v.Cfg.Port)
-	print("uri=%q\n",v.Cfg.Uri)
-	print("lastPull=%v\n",v.Cfg.LastPull)
 	/* v.DMsg(mkstr("Cmd.do: %v %v\n ", v.Cmd.Do, v.Cmd.Next))
 	v.DMsg(mkstr("Cfg.Uri: %v\n ", v.Cfg.Uri))
 	v.DMsg(mkstr("Cfg.Host: %v\n ", v.Cfg.Host))
@@ -82,8 +76,13 @@ func main () {
 	if err != nil {
 		v.ErrorExit(mkstr("Error fetching data %v",err),1)
 	}
+	err = v.Cmd.WriteTemp(data)
+	if err != nil {
+		v.ErrorExit(mkstr("Error writing temp data %v",err),1)
+	}
 
 	v.Populate(data)
+	v.WriteCfg()
 
 	listDevs(v.Data.Devices)
 	listRooms(v.Data.Rooms)
