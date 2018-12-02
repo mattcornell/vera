@@ -59,11 +59,10 @@ helpMsg = `
 ###i###        
 ###i### Configuration options (stored in the .config.toml): 
 ###i### host="vera.teamcornell.com"
-###i### port="3480"
-###i### lastpull="1543096934"
-###i### freshfile="2"
-###i### FRESHFILE=2 # <- minutes before forces a reload of vera settings
-###i###  (the script will force a refresh when changing any state)
+###i### port="3480" 
+###i### refresh=180  //seconds before cache needs freshening
+###i### lastpull=1543271683 //this value is updated when data is retrieved 
+###i### cache=".lastpull" //file to store 
 ###i###        
 ###i###  examples: 
 ###i###   ./vera list   # show all devices 
@@ -72,40 +71,40 @@ helpMsg = `
 ###i###   ./vera dim 33 10  # Set dimmable light device 33 to 10 
 ###i###`
 )
-func configQuit(m string) {                                                                            
-	if ! empty(m) { errOut(mkstr("\n vera: %v",m)) }
-    reg, err := regexp.Compile(`###h?i###(.*)\r?\n`)                                                          
-    if err != nil {                                                                                           
-        ErrorExit("bad regexp compile",1)                                                                     
-    }                                                                                                         
-    for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
-        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
-    }                                                                                                         
-    os.Exit(0)                                                                                                
-}                                                                                                             
-func InfoQuit(m string) {                                                                                             
-	if ! empty(m) { errOut(mkstr("\nvera: %v",m)) }
-    reg,err := regexp.Compile(`###h?i###(.*)\r?\n`)                                                           
-    if err != nil {                                                                                           
-        ErrorExit("bad regexp compile",1)                                                                     
-    }                                                                                                         
-    for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
-        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
-    }                                                                                                         
-    os.Exit(0)                                                                                                
-}                                                                                                             
-                                                                                                              
-func HelpQuit(m string) {                                                                                             
-	if ! empty(m) { errOut(mkstr("\n vera: %v",m)) }
-    reg,err := regexp.Compile(`###h###(.*)\r?\n`)                                                             
-    if err != nil {                                                                                           
-        ErrorExit("bad regexp compile",1)                                                                     
-    }                                                                                                         
-    for _,i := range reg.FindAllString(helpMsg,-1) {                                                          
-        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))                                                            
-    }                                                                                                         
-    os.Exit(0)                                                                                                
-}                                             
+func configQuit(m string) {
+	if ! Empty(m) { errOut(mkstr("\n vera: %v",m)) }
+    reg, err := regexp.Compile(`###h?i###(.*)\r?\n`)
+    if err != nil {
+        ErrorExit("bad regexp compile",1)
+    }
+    for _,i := range reg.FindAllString(helpMsg,-1) {
+        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))
+    }
+    os.Exit(0)
+}
+func InfoQuit(m string) {
+	if ! Empty(m) { errOut(mkstr("\nvera: %v",m)) }
+    reg,err := regexp.Compile(`###h?i###(.*)\r?\n`)
+    if err != nil {
+        ErrorExit("bad regexp compile",1)
+    }
+    for _,i := range reg.FindAllString(helpMsg,-1) {
+        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))
+    }
+    os.Exit(0)
+}
+
+func HelpQuit(m string) {
+	if ! Empty(m) { errOut(mkstr("\n vera: %v",m)) }
+    reg,err := regexp.Compile(`###h###(.*)\r?\n`)
+    if err != nil {
+        ErrorExit("bad regexp compile",1)
+    }
+    for _,i := range reg.FindAllString(helpMsg,-1) {
+        fmt.Printf("%v",reg.ReplaceAllString(i,"$1\n"))
+    }
+    os.Exit(0)
+}
 
 func errOut (m string ){
     fmt.Fprintf(os.Stderr, "%v", m)

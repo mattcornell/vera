@@ -9,17 +9,65 @@ import (
 	"os"
 )
 
-func (c CmdType) MakeUri() {
-	switch Cmd.Do {
-		case "all", "list": //list all devices
-			Cmd.Uri="http://vera.teamcornell.com:3480/data_request?id=user_data&output_format=xml&ns=1"
-		case  "switch":  //toggle a device 
-			Cmd.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,Cmd.Dev,Cmd.Value )
-		default:
-			DMsg(mkstr("invalid or unused command %v, so nothing to do.\n",c))
+var err error
 
+func (c cfgType) NeedRefresh() bool {
+	Xml,err=ReadCache()
+	if err != nil { return true  }
+    if RefreshOpt  { return true }
+    if  ( ! RefreshOpt && 
+		 (Cmd.Do=="all"||
+		 Cmd.Do=="list"||
+		 Cmd.Do=="details"||
+		 Cmd.Do=="status") && 
+		 ((time.Now().Unix()-Cfg.Lastpull) <  Cfg.Refresh)) {
+         return false
+     }
+     return true
+}
+
+func DoRefresh() { 
+	if Cfg.NeedRefresh() { 
+		var c CmdType
+			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
+			c.Do="list" 
+			c.Fetch() 
 	}
-		return
+	err := Cmd.WriteTemp(Xml)                                                                              
+    if err != nil {                                                                                           
+        ErrorExit(mkstr("Error writing temp data %v", err), 1)                                              
+    }                                                                                                         
+} 
+
+func (c CmdType) MakeUri() CmdType {
+	switch c.Do {
+		case "all", "status","list","rooms","room","scene","scenes","user","users": //list all devices
+			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
+		case  "off":  //turn on device 
+			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
+			if Empty(c.Value) { ErrorExit("Missing device value",1) }
+			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
+		case  "on":  //turn on device 
+			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
+			if Empty(c.Value) { ErrorExit("Missing device value",1) }
+			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
+
+		case  "switch","toggle":  //toggle a device 
+//http://target:3480/data_request?id=action&DeviceNum=6&serviceId=urn:micasaverde-com:serviceId:HaDevice1&action=ToggleState
+			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
+			//var this DeviceList
+			//this=Data.Devices
+			//err,strconv.Atoi
+			/*if (Data.DevFromNum(c.Dev).Value()=="0") { 
+				c.Value="On"
+			} else { 
+				c.Value="Off"
+			}*/
+			c.Uri=mkstr("http://%v:%v/data_request?id=action&DeviceNum=%v&serviceId=urn:micasaverde-com:serviceId:HaDevice1&action=ToggleState", Cfg.Host,Cfg.Port,c.Dev)
+		default:
+			ErrorExit(mkstr("invalid or unused command %q, so nothing to do.\n",c.Do),1)
+	}
+		return c 
 }
 
 func errorChk (e error) {
@@ -39,25 +87,32 @@ func (c CmdType) WriteTemp(b []byte) (err error)  {
 		return
 }
 
-func ReadCache() []byte{
-		b, err := ioutil.ReadFile(Cfg.Cache)
-		errorChk(err)
-		return b
+var cacheBuff []byte  = nil
+func ReadCache() ([]byte,error){
+		return ioutil.ReadFile(Cfg.Cache)
 }
-
-func (c CmdType) Execute() (b []byte, err error) {
-	if Cfg.isfresh() {
-		dPause("We reading the cache instead!")
-		return ReadCache(),nil
+/*
+	if ! Cfg.needRefresh() {
+			Xml,err:=ReadCache()
+			if err != nil { 
+				return err  
+			}
 	}
-	if empty(Cmd.Uri) {
-		Cmd.MakeUri()
+	*/
+
+func (c CmdType) Fetch() (err error) {
+	if Empty(c.Uri) {
+		c=Cmd
+		c.MakeUri()
 	}
 	var req *http.Request
-	if (len(Cmd.Body)>0) {
-		req, err = http.NewRequest("POST", Cmd.Uri, bytes.NewBuffer([]byte(Cmd.Body)))
+	if (len(c.Body)>0) {
+		req, err = http.NewRequest("POST", c.Uri, bytes.NewBuffer([]byte(c.Body)))
 	} else { 
-		req, err = http.NewRequest("POST", Cmd.Uri, nil)
+		req, err = http.NewRequest("POST", c.Uri, nil)
+	}
+	if  err != nil { 
+		ErrorExit(mkstr("Err posting to c.Uri %v",c.Uri),1) 
 	}
     errorChk(err)
 
@@ -67,14 +122,13 @@ func (c CmdType) Execute() (b []byte, err error) {
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
     }
     var netClient = &http.Client{
-        Timeout:   time.Second * 5,
+        Timeout: time.Second * 5,
         Transport: tr,
     }
 
-    DTime("before netClient\n")
+    DTime(mkstr("\nstart netClient command %v %v\n",c.Do,c.Uri))
     response, err := netClient.Do(req)
-    DTime("after netClient\n")
-
+    DTime("done netClient\n")
     errorChk(err)
 
     switch response.StatusCode {
@@ -86,10 +140,11 @@ func (c CmdType) Execute() (b []byte, err error) {
         return
     }
 
-    var body []byte
+    //var body []byte
     if response.StatusCode == http.StatusOK {
-        body, _ = ioutil.ReadAll(response.Body)
+        Xml, _ = ioutil.ReadAll(response.Body)
     }
     defer response.Body.Close()
-    return body, err
+    //return body, err
+    return err
 }

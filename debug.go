@@ -11,6 +11,8 @@ var DebugOpt bool
 var DOut io.Writer = ioutil.Discard
 var	DebugTime   = time.Now()
 
+var DPause = dPause
+
 func dPause(this string) {
 	if DebugOpt {
 		fmt.Fprintf(DOut, "%v", this)
@@ -21,7 +23,7 @@ func dPause(this string) {
 
 func DWhatsThis(this interface{}) {
 	if DebugOpt {
-		fmt.Fprintf(DOut, "%T: %v\n", this, this)
+		fmt.Fprintf(DOut, "DWhatsThis %T: %v\n", this, this)
 	}
 }
 

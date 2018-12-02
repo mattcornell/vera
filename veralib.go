@@ -5,11 +5,13 @@ import (
 	"os"
 	"io/ioutil"
 	"time"
-	//"strconv"
+	"strconv"
+	"strings"
 )
 
-func empty(object interface{}) bool {
+func Empty(object interface{}) bool {
     //First check normal definitions of empty
+	//return true
     if object == nil {
         return true
     } else if object == "" {
@@ -19,7 +21,6 @@ func empty(object interface{}) bool {
     }
     return false
 }
-
 
 const(
       // personal preference for date format
@@ -32,9 +33,10 @@ var mkstr = fmt.Sprintf
 var CatNames = []string{"", "NA Interface", "Dimmable_Light", "Switch", "Security_Sensor", "HVAC", "Camera", "Door_Lock", "Window_Convering", "Remote_Control", "IR_Transmitter", "Generic_I_O", "Generic_Sensor", "Serial_Port", "Scene_Controller", "AV", "Humidity_Sensor", "Temperature_Sensor", "Light_Sensor", "Z-Wave_Interface", "Insteon_Interface", "Power_Meter", "Alarm_Panel", "Alarm_Partition", "Siren", "Weather", "Philips_Controller", "Appliance", "UV_Sensor", "Mouse_Trap", "Doorbell", "Keypad"}
 
 var Data VeraRoot
+var Xml []byte
 
-func Populate (b []byte) { 
-	err := xml.Unmarshal(b, &Data)
+func Populate () { 
+	err := xml.Unmarshal(Xml, &Data)
 	if err != nil { ErrorExit(mkstr("Error getting xml root data %v",err),1) }
 	return
 }
@@ -56,6 +58,48 @@ type RoomList []Room
 type Users []User
 type Scenes []Scene
 
+func (l VeraRoot) DevMatchesName(match string) (d Device) { 
+	for _, this := range l.Devices { 
+		if (strings.ToUpper(this.Name)==strings.ToUpper(match)) {
+	       d = this
+		   return d
+		}
+	}
+	return d
+}
+
+func (l VeraRoot) DevFromNum(match string) (d Device) { 
+	for _, this := range l.Devices { 
+		matchnum,err:=strconv.Atoi(match)
+		if err !=nil { matchnum=0 }
+		if (this.Id==matchnum) {
+	       d = this
+		   return d
+		}
+	}
+	return d
+}
+
+
+func (l VeraRoot) DevContainsName(match string) (r DeviceList) { 
+	for _, this := range l.Devices { 
+		if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
+	       r = append(r,this)
+		}
+	}
+	return r
+}
+
+func (l VeraRoot) DevId(id string) (r DeviceList) { 
+	for _, this := range l.Devices {
+		c,_:= strconv.Atoi(id)
+		if this.Id==c  {
+			return append(r,this)
+		}
+	}
+	return r
+}
+
 func (d Device) RoomName() string {
 	for _, this := range Data.Rooms {
 		if this.Id == d.RoomNum {
@@ -67,7 +111,7 @@ func (d Device) RoomName() string {
 
 type Room struct {
 	XMLName xml.Name `xml:"room"`
-	/*id="1517941" Name="mariel" Level="1" IsGuest="0"></user>*/
+	/*id="1373941" Name="buster" Level="1" IsGuest="0"></user>*/
 	Id      string `xml:"id,attr"`
 	Section string `xml:"section,attr"`
 	Name    string `xml:"name,attr"`
@@ -117,16 +161,6 @@ func (d Device) Category() string {
 	return CatNames[d.CategoryNum]
 }
 
-/* func (s State) debug() {
-	debugPrint(mkstr("status.value: %v s.Variable: %v", s.Value, s.Variable))
-	return
-
-}*/
-/*func (d Device) debug() {
-	debugPrint(mkstr("device.id: %v d.Name: %v d.CatNum: %v", d.Id, d.Name, d.CategoryNum))
-	return
-
-}*/
 func (d Device) value(V string) (r string) {
 	for _, this := range d.States {
 		if this.Variable == V {
@@ -135,9 +169,42 @@ func (d Device) value(V string) (r string) {
 	}
 	return ""
 }
+func (d Device) Value() (string) { 
+	switch d.CategoryNum {
+	case 2: //dimmable light
+		return d.value("LoadLevelStatus")
+	case 3: //lights, switches
+		return d.value("Target") 
+	case 4: // security device (motion, window sensor)
+		return d.value("Armed")
+	case 5: //HVAC
+		return d.value("BatteryLevel")
+	case 6: //cameras
+		return "" //just null out the status
+	case 7: // door lock
+		return d.value("Status") 
+	case 11: // Generic IO
+		return d.value("ArmedTripped") 
+	case 14: // remote controller
+		return ""  //TODO, return battery level? Last seen?
+	case 16: // humidity level
+		return d.value("CurrentLevel")
+	case 17: // degree temperature
+		return d.value("CurrentTemperature")
+	case 18: // lux level
+		return d.value("CurrentLevel")
+	case 19: // ZigBee Network
+		return  ""
+	case 28: // UV sensor
+		return d.value("CurrentLevel")
+	default:
+		return ""
+	}
+	return ""
+}
 
 func (d Device) StatusTxt() (r string) {
-	r = ""
+	//r = ""
 	switch d.CategoryNum {
 	case 2: //dimmable light
 		if d.value("LoadLevelStatus") == "0" {
@@ -177,7 +244,7 @@ func (d Device) StatusTxt() (r string) {
 			r = "[Alarm]"
 		}
 	case 14: // remote controller
-		r = mkstr("controls scene %v", d.value("Scenes"))
+		if len(d.value("Scenes"))>0 {  r = mkstr("controls %v", d.value("Scenes"))}
 	case 16: // humidity level
 		r = mkstr("%v%v", d.value("CurrentLevel"), `%`)
 	case 17: // degree temperature
@@ -235,8 +302,3 @@ func OpenFile (f string) (b []byte, err error) {
 	b,err = ioutil.ReadAll(x)
     return
 }
-
-
-
-
-
