@@ -58,6 +58,17 @@ type RoomList []Room
 type Users []User
 type Scenes []Scene
 
+func (l VeraRoot) DevMatches(match string) (d Device) { 
+    if _, err := strconv.Atoi(match); err == nil {
+		//look for Int Dev ID
+		return l.DevId(match)
+	} else { 
+		//look for String Dev ID
+		return l.DevMatchesName(match)
+	}
+	ErrorExit(mkstr("No matching device: %v",match),1) 
+	return d
+}
 func (l VeraRoot) DevMatchesName(match string) (d Device) { 
 	for _, this := range l.Devices { 
 		if (strings.ToUpper(this.Name)==strings.ToUpper(match)) {
@@ -65,23 +76,21 @@ func (l VeraRoot) DevMatchesName(match string) (d Device) {
 		   return d
 		}
 	}
+	ErrorExit(mkstr("No matching device: %v",match),1) 
 	return d
 }
 
-func (l VeraRoot) DevFromNum(match string) (d Device) { 
-	for _, this := range l.Devices { 
-		matchnum,err:=strconv.Atoi(match)
-		if err !=nil { matchnum=0 }
-		if (this.Id==matchnum) {
-	       d = this
-		   return d
+func (l VeraRoot) DevId(id string) (d Device) { 
+	for _, this := range Data.Devices {
+		c,_:= strconv.Atoi(id)
+		if this.Id==c  {
+			return this
 		}
 	}
 	return d
 }
 
-
-func (l VeraRoot) DevContainsName(match string) (r DeviceList) { 
+func (l VeraRoot) DevsContainsName(match string) (r DeviceList) { 
 	for _, this := range l.Devices { 
 		if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
 	       r = append(r,this)
@@ -90,14 +99,22 @@ func (l VeraRoot) DevContainsName(match string) (r DeviceList) {
 	return r
 }
 
-func (l VeraRoot) DevId(id string) (r DeviceList) { 
-	for _, this := range l.Devices {
-		c,_:= strconv.Atoi(id)
-		if this.Id==c  {
-			return append(r,this)
+func (l VeraRoot) DevContainsName(match string) (d Device) { 
+	for _, this := range l.Devices { 
+		if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
+	       return this
 		}
 	}
-	return r
+	return  d 
+}
+func (l VeraRoot) DevsId(id string) ( d DeviceList ) { 
+	for _, this := range Data.Devices {
+		c,_:= strconv.Atoi(id)
+		if this.Id==c  {
+			d=append(d,this)
+		}
+	}
+	return d
 }
 
 func (d Device) RoomName() string {

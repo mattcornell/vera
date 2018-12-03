@@ -41,7 +41,7 @@ func WriteCfg (){
 func ReadCfg () {
 	if _,err := toml.DecodeFile(Cfg.File,&Cfg)
 	err != nil { 
-		ErrorExit(mkstr("Config file %v not found",Cfg.File),1)
+		HelpQuit(mkstr("Config file %v not found\n	try vera -info for more information\n\n",Cfg.File))
 	}
 	if Empty(Cfg.Cache) { Cfg.Cache =".lastpull" }
 	if Empty(Cfg.Lastpull) { Cfg.Lastpull = 0 }

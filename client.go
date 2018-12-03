@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"bytes"
 	"os"
+	"strconv"
 )
 
 var err error
@@ -41,7 +42,7 @@ func DoRefresh() {
 
 func (c CmdType) MakeUri() CmdType {
 	switch c.Do {
-		case "all", "status","list","rooms","room","scene","scenes","user","users": //list all devices
+		case "all","list","rooms","room","scene","scenes","user","users": //list all devices
 			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
 		case  "off":  //turn on device 
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
@@ -51,23 +52,39 @@ func (c CmdType) MakeUri() CmdType {
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
 			if Empty(c.Value) { ErrorExit("Missing device value",1) }
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
-
-		case  "switch","toggle":  //toggle a device 
-//http://target:3480/data_request?id=action&DeviceNum=6&serviceId=urn:micasaverde-com:serviceId:HaDevice1&action=ToggleState
+		case  "lock", "unlock":  //toggle a device 
+			DPause(mkstr("This is %v",c.Uri))
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
-			//var this DeviceList
-			//this=Data.Devices
-			//err,strconv.Atoi
-			/*if (Data.DevFromNum(c.Dev).Value()=="0") { 
-				c.Value="On"
-			} else { 
-				c.Value="Off"
-			}*/
+				if len(Cmd.Next) > 2 {
+					if !(Empty(Cmd.Next[2])) {
+						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
+					} //end of ! Empty(v.Cmd.Next)
+				}
+			var v string
+			if (c.Do == "lock") { v="1" } else { v="0" }
+			c.Uri=mkstr("http://%v:%v/data_request?id=action&DeviceNum=%v&serviceId=urn:micasaverde-com:serviceId:DoorLock1&action=SetTarget&newTargetValue=%v",Cfg.Host,Cfg.Port,c.Dev,v)
+		case "status","value": //get device value
+			if Empty(c.Dev) { ErrorExit("Missing device ",1) }
+				if len(Cmd.Next) > 2 {
+					if !(Empty(Cmd.Next[2])) {
+						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
+					} //end of ! Empty(v.Cmd.Next)
+				}
+			//c.Dev = strconv.Itoa(r.Id)
+			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
+		case  "switch","toggle":  //toggle a device 
+			if Empty(c.Dev) { ErrorExit("Missing device ",1) }
+				if len(Cmd.Next) > 2 {
+					if !(Empty(Cmd.Next[2])) {
+						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
+					} //end of ! Empty(v.Cmd.Next)
+				}
+			//c.Dev = strconv.Itoa(r.Id)
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&DeviceNum=%v&serviceId=urn:micasaverde-com:serviceId:HaDevice1&action=ToggleState", Cfg.Host,Cfg.Port,c.Dev)
 		default:
 			ErrorExit(mkstr("invalid or unused command %q, so nothing to do.\n",c.Do),1)
 	}
-		return c 
+		return c
 }
 
 func errorChk (e error) {

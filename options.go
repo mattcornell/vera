@@ -4,6 +4,7 @@ import(
 	"flag"
 	"os"
 	"strings"
+	"strconv"
 )
 
 var Cmd CmdType
@@ -29,6 +30,14 @@ type CmdType struct {
 var (
 	HelpOpt, BareOpt, InfoOpt, RefreshOpt, UpdateOpt bool 
 )
+
+func isInt(s string) bool {
+    if _, err := strconv.Atoi(s); err == nil {
+        return true
+    }
+    return false
+}
+
 
 func GetOptions() {
 	Cmd = Cmd.new() 
@@ -83,13 +92,14 @@ func GetOptions() {
 				}
 				Cmd.Dev = Cmd.Next[2]
 				Cmd.Value = Cmd.Next[3]
-			case "toggle","switch":
-				if Empty ( Cmd.Next[2] ){ 
-					HelpQuit("command needs a device number")
+			case "toggle","switch", "lock", "unlock","status","value":
+			   if len(Cmd.Next) > 2 {                                                                        
+					if Empty ( Cmd.Next[2] ){ 
+						HelpQuit(mkstr("command %v needs a device name or number",Cmd.Do))
+					}
 				}
 				Cmd.Dev = Cmd.Next[2]
 			}
-
 		}
     } else {
        Cmd.Do = "list"

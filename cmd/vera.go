@@ -12,7 +12,7 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
-	"time"
+//	"time"
 )
 
 var (
@@ -35,18 +35,21 @@ func main() {
 
 	v.GetOptions()
 	v.ReadCfg()
-
-	v.DMsg(mkstr("Now Time: %v\n", time.Now().Unix()))
-
 	v.DoRefresh()
-
 	v.Populate()
-
 	v.WriteCfg()
 
 	switch v.Cmd.Do {
 	case "all", "list":
-		listDev(v.Data.Devices)
+		//listDev(v.Data.Devices)
+		listDev()
+	case "lock","unlock":
+		this:=v.Cmd.MakeUri()
+		if (v.Data.DevMatches(v.Cmd.Dev).CategoryNum == 7) { 
+			this.Fetch()
+		} else { 
+			v.ErrorExit(mkstr("Device %v does not appear to be a lock",v.Data.DevId(v.Cmd.Dev).Name),1)
+		}
 	case "on", "off","switch","toggle":
 		switchDev()
 	case "room", "rooms":
@@ -56,7 +59,13 @@ func main() {
 	case "scene", "scenes":
 		listScene(v.Data.Scenes)
 	case "value", "status":
-		listDev(v.Data.Devices)
+		this:=v.Cmd.MakeUri()
+		this.Fetch()
+		if v.BareOpt {
+			print(mkstr("%v\n",v.Data.DevMatches(v.Cmd.Dev).Value()))
+		} else {
+			print(mkstr("%v\n",v.Data.DevMatches(v.Cmd.Dev).StatusTxt()))
+		}
 	}
 }
 
@@ -78,13 +87,14 @@ func switchDev() error {
 	return nil
 }
 
-func listDev(r v.DeviceList) {
-	if len(v.Cmd.Next) > 1 {
+func listDev() {
+	r := v.Data.Devices
+	if len(v.Cmd.Next) > 2 {
 		if !(v.Empty(v.Cmd.Next[2])) {
 			if isInt(v.Cmd.Next[2]) {
-				r = v.Data.DevId(v.Cmd.Next[2])
+				r = v.Data.DevsId(v.Cmd.Next[2])
 			} else {
-				r = v.Data.DevContainsName(v.Cmd.Next[2])
+				r = v.Data.DevsContainsName(v.Cmd.Next[2])
 			}
 		} //end of ! Empty(v.Cmd.Next)
 	}
@@ -92,8 +102,8 @@ func listDev(r v.DeviceList) {
 	if len(r) > 0 {
 		header("ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
 	}
-	for _, this := range r {
-		fmt.Fprintf(t, "%v:\t%v\t%v\t%v\t%v\n", this.Id, this.Name, this.RoomName(), this.Category(), this.StatusTxt())
+	for _, v := range r {
+		fmt.Fprintf(t, "%v:\t%v\t%v\t%v\t%v\n", v.Id, v.Name, v.RoomName(), v.Category(), v.StatusTxt())
 	} //end range over d devices
 	t.Flush()
 }
