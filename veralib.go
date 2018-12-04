@@ -82,7 +82,9 @@ func (l Rooms) Match(match string) (r Rooms)  {
 }
 func (l Devices) Matches ( match string ) (d Devices) { 
     if _, err := strconv.Atoi(match); err == nil {
-		//look for Int Dev ID
+		found:=l.Match(match)
+		return append(d,found)
+	
 	} else { 
 		for _, this := range l { 
 			if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
@@ -104,6 +106,7 @@ func (l Devices) Match(match string) (d Device) {
 				return v
 			}
 		} 
+		ErrorExit(mkstr("No matching device: %v",match),1) 
 	} else { 
 		//return first matching name 
 		for _, v := range l { 
@@ -112,27 +115,6 @@ func (l Devices) Match(match string) (d Device) {
 			} 
 		}//end of range over l 
 	} //end of if int
-	return d
-}
-
-func (l VeraRoot) DevMatches(match string) (d Device) { 
-    if _, err := strconv.Atoi(match); err == nil {
-		//look for Int Dev ID
-		return l.DevId(match)
-	} else { 
-		//look for String Dev ID
-		return l.DevMatchesName(match)
-	}
-	ErrorExit(mkstr("No matching device: %v",match),1) 
-	return d
-}
-
-func (l VeraRoot) DevMatchesName(match string) (d Device) { 
-	for _, v := range Data.DeviceList { 
-		if (strings.ToUpper(v.Name)==strings.ToUpper(match)) {
-		   return v
-		}
-	}
 	ErrorExit(mkstr("No matching device: %v",match),1) 
 	return d
 }
@@ -142,33 +124,6 @@ func (l VeraRoot) DevId(id string) (d Device) {
 		c,_:= strconv.Atoi(id)
 		if v.Id==c  {
 			return v
-		}
-	}
-	return d
-}
-
-func (l VeraRoot) DevsContainsName(match string) (r Devices) { 
-	for _, v := range l.DeviceList { 
-		if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
-	       r = append(r,v)
-		}
-	}
-	return r
-}
-
-func (l VeraRoot) DevContainsName(match string) (d Device) { 
-	for _, v := range l.DeviceList { 
-		if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
-	       return v
-		}
-	}
-	return  d 
-}
-func (l VeraRoot) DevsId(id string) ( d Devices ) { 
-	for _, v := range Data.DeviceList {
-		c,_:= strconv.Atoi(id)
-		if v.Id==c  {
-			d=append(d,v)
 		}
 	}
 	return d

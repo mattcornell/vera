@@ -27,6 +27,13 @@ type CmdType struct {
 	Body	[]byte
 }
 
+func SecondArg() (r string) {
+    for i, next := range Cmd.Next {
+        if (i == 2) { return next }
+    }
+    return r
+}
+
 var (
 	HelpOpt, BareOpt, InfoOpt, RefreshOpt, UpdateOpt bool 
 )

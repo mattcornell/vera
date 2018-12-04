@@ -28,13 +28,6 @@ const (
 var t = new(tabwriter.Writer)
 //var Root v.VeraRoot
 
-func secondArg()  (r string) { 
-	for i, next := range v.Cmd.Next {
-		if (i == 2) { return next }
-	}
-	return r
-}
-
 func main() {
 	padding := 3
 	t.Init(os.Stdout, 0, 0, padding, ' ', 0)
@@ -47,53 +40,33 @@ func main() {
 
 	switch v.Cmd.Do {
 	case "all", "list":
-/* do it like this instead
-		var r v.Rooms = v.Data.RoomList
-        listRoom(r.Match(secondArg()))
-*/
-
- var d v.Devices = v.Data.DeviceList 
- listDev(d.Matches(secondArg()))
-
- /*
- old device choice
-		r := v.Data.DeviceList
-		if  ! v.Empty(secondArg()) {
-			if isInt(secondArg()) {
-			// int means return room id
-				r = v.Data.DevsId(secondArg())
-			} else {
-			// string means pattern match
-				r = v.Data.DevsContainsName(secondArg())
-			}
-		}
-		listDev(r)
-		*/
-		/* 
-		if len(v.Cmd.Next) > 2 {
-			if !(v.Empty(v.Cmd.Next[2])) {
-				if isInt(v.Cmd.Next[2]) {
-				} else {
-			}
-			} //end of ! Empty(v.Cmd.Next)
-		}
-		*/
+	    var d v.Devices = v.Data.DeviceList 
+	    listDev(d.Matches(v.SecondArg()))
 	case "lock","unlock":
 		this:=v.Cmd.MakeUri()
-		if (v.Data.DevMatches(v.Cmd.Dev).CategoryNum == 7) { 
+	    var d v.Devices = v.Data.DeviceList 
+		if (d.Match(v.Cmd.Dev).CategoryNum == 7) { 
 			this.Fetch()
 		} else { 
 			v.ErrorExit(mkstr("Device %v does not appear to be a lock",v.Data.DevId(v.Cmd.Dev).Name),1)
 		}
+		/* matt
+		if (v.Data.DevMatches(v.Cmd.Dev).CategoryNum == 7) { 
+			this.Fetch()
+		} else { 
+			v.ErrorExit(mkstr("Device %v does not appear to be a lock",v.Data.DevId(v.Cmd.Dev).Name),1)
+		} matt */
 	case "on", "off","switch","toggle":
 		switchDev()
 		time.Sleep(time.Second * 4) 
 		v.RefreshAfterCommand()
+		var d v.Devices = v.Data.DeviceList 
+		print(mkstr("%v\n",d.Match(v.Cmd.Dev).Value()))
 		r := v.Devices { v.Data.DevId(v.Cmd.Dev), }
 		listDev(r)
 	case "room", "rooms":
 		var r v.Rooms = v.Data.RoomList
-		listRoom(r.Match(secondArg()))
+		listRoom(r.Match(v.SecondArg()))
 	case "users", "user":
 		listUser(v.Data.Users)
 	case "scene", "scenes":
@@ -102,9 +75,12 @@ func main() {
 		this:=v.Cmd.MakeUri()
 		this.Fetch()
 		if v.BareOpt {
-			print(mkstr("%v\n",v.Data.DevMatches(v.Cmd.Dev).Value()))
+			var d v.Devices = v.Data.DeviceList 
+			print(mkstr("%v\n",d.Match(v.Cmd.Dev).Value()))
+
 		} else {
-			print(mkstr("%v\n",v.Data.DevMatches(v.Cmd.Dev).StatusTxt()))
+			var d v.Devices = v.Data.DeviceList 
+			print(mkstr("%v\n",d.Match(v.Cmd.Dev).StatusTxt()))
 		}
 	}
 }

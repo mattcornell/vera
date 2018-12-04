@@ -13,16 +13,16 @@ import (
 var err error
 
 func (c cfgType) NeedRefresh() bool {
-	Xml,err=ReadCache()
-	if err != nil { return true  }
     if RefreshOpt  { 
 		return true 
 	}
+	Xml,err=ReadCache()
+	if err != nil { return true  }
     if  ( ! RefreshOpt && 
-		 (Cmd.Do=="all"||
+		 /*(Cmd.Do=="all"||
 		 Cmd.Do=="list"||
 		 Cmd.Do=="details"||
-		 Cmd.Do=="status") && 
+		 Cmd.Do=="status") && */
 		 ((time.Now().Unix()-Cfg.Lastpull) <  Cfg.Refresh)) {
          return false
      }
@@ -41,6 +41,9 @@ func DoRefresh() {
 			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
 			c.Do="list"
 			c.Fetch()
+	} else { 
+		DMsg( "Using cache file\n" )
+
 	}
 	err := Cmd.WriteTemp(Xml)
     if err != nil {
@@ -55,38 +58,45 @@ func (c CmdType) MakeUri() CmdType {
 		case  "off":  //turn on device 
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
 			if Empty(c.Value) { ErrorExit("Missing device value",1) }
+			var d Devices = Data.DeviceList
+			dev := d.Match(SecondArg())
+			c.Dev=strconv.Itoa(dev.Id)
+			if (dev.Value() == "0") {
+				 ErrorExit(mkstr("device %v is already off",dev.Name),0)
+			}
+			c.Value="0"
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
 		case  "on":  //turn on device 
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
 			if Empty(c.Value) { ErrorExit("Missing device value",1) }
+			var d Devices = Data.DeviceList
+			dev := d.Match(SecondArg())
+			if (dev.Value() == "1") { 
+				ErrorExit(mkstr("device %v is already on",dev.Name),0) }
+			c.Value="1"
+			c.Dev=strconv.Itoa(dev.Id)
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
 		case  "lock", "unlock":  //toggle a device 
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
-				if len(Cmd.Next) > 2 {
-					if !(Empty(Cmd.Next[2])) {
-						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
-					} //end of ! Empty(v.Cmd.Next)
-				}
+			var d Devices = Data.DeviceList
+			dev := d.Match(SecondArg())
+			c.Dev=strconv.Itoa(dev.Id)
 			var v string
+			if ((dev.Value() == "0")&&(c.Do =="unlock")) {
+				ErrorExit(mkstr("device %v is already open",dev.Name),0) }
+			if ((dev.Value() == "1")&&(c.Do =="lock")) {
+				ErrorExit(mkstr("device %v is already locked",dev.Name),0) }
 			if (c.Do == "lock") { v="1" } else { v="0" }
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&DeviceNum=%v&serviceId=urn:micasaverde-com:serviceId:DoorLock1&action=SetTarget&newTargetValue=%v",Cfg.Host,Cfg.Port,c.Dev,v)
 		case "status","value": //get device value
 			if Empty(c.Dev) { ErrorExit("Missing device ",1) }
-				if len(Cmd.Next) > 2 {
-					if !(Empty(Cmd.Next[2])) {
-						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
-					} //end of ! Empty(v.Cmd.Next)
-				}
-			//c.Dev = strconv.Itoa(r.Id)
-			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
+				var d Devices = Data.DeviceList
+				c.Dev=strconv.Itoa(	d.Match(SecondArg()).Id)
+				c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
 		case  "switch","toggle":  //toggle a device 
 			if Empty(c.Dev) { ErrorExit("Missing device ",1) }
-				if len(Cmd.Next) > 2 {
-					if !(Empty(Cmd.Next[2])) {
-						c.Dev=strconv.Itoa(Data.DevMatches(Cmd.Next[2]).Id)
-					} //end of ! Empty(v.Cmd.Next)
-				}
-			//c.Dev = strconv.Itoa(r.Id)
+				var d Devices = Data.DeviceList
+				c.Dev=strconv.Itoa(	d.Match(SecondArg()).Id)
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&DeviceNum=%v&serviceId=urn:micasaverde-com:serviceId:HaDevice1&action=ToggleState", Cfg.Host,Cfg.Port,c.Dev)
 		default:
 			ErrorExit(mkstr("invalid or unused command %q, so nothing to do.\n",c.Do),1)
@@ -115,15 +125,6 @@ var cacheBuff []byte  = nil
 func ReadCache() ([]byte,error){
 		return ioutil.ReadFile(Cfg.Cache)
 }
-/*
-	if ! Cfg.needRefresh() {
-			Xml,err:=ReadCache()
-			if err != nil { 
-				return err  
-			}
-	}
-	*/
-
 func (c CmdType) Fetch() (err error) {
 	if Empty(c.Uri) {
 		c=Cmd
