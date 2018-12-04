@@ -24,7 +24,7 @@ helpMsg = `
 ###i### 
 ###i### source: https://mmcis.com/matt/projects/vera/
 ###i### -----------------------------------------------------------------
-###h### vera [-qrvVhi] command [command arg]
+###h### vera [-brvVhi] command [command arg]
 ###i### Vera stores a CONFIGFILE=./vera_control and TMPFILE=./vera_tmpfile
 ###h###    
 ###h### commands:
@@ -34,7 +34,7 @@ helpMsg = `
 ###h###    
 ###i###	help - this output
 ###i###	info - this output (but more)
-###i###	list [device_nubmer|name|grep string] - list device(s)
+###i###	list [device_number|name|pattern] - list device(s)
 ###i###	room[s] [roomnumber] - list rooms 
 ###i###	scene[s] [scenenumber] - list scenes 
 ###i###	refresh - poll the zwave network for changes 
@@ -51,7 +51,7 @@ helpMsg = `
 ###i###	watch dev_number [seconds] - watch a security device for "trip" 
 ###i###    
 ###h###    vera options:
-###h###        -q  = quiet 	run quiet except for errors
+###h###        -b  = bare output 
 ###h###        -r  = force refresh of vera status
 ###h###        -u  = check version for update
 ###h###        -h  = print help
@@ -67,6 +67,7 @@ helpMsg = `
 ###i###  examples: 
 ###i###   ./vera list   # show all devices 
 ###i###   ./vera list garage  # show all device with garage in the name
+###i###   ./vera on "table light" # turn on switch that 
 ###i###   ./vera on 10 # turn on switch that is device num 10
 ###i###   ./vera dim 33 10  # Set dimmable light device 33 to 10 
 ###i###`

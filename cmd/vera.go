@@ -1,5 +1,4 @@
 package main
-
 // vera.go: cli command for vera micasa home controller
 /* date: 2018-11-09_100434
  * by: matt@teamcornell.com
@@ -12,7 +11,7 @@ import (
 	"os"
 	"strconv"
 	"text/tabwriter"
-//	"time"
+	"time"
 )
 
 var (
@@ -29,6 +28,13 @@ const (
 var t = new(tabwriter.Writer)
 //var Root v.VeraRoot
 
+func secondArg()  (r string) { 
+	for i, next := range v.Cmd.Next {
+		if (i == 2) { return next }
+	}
+	return r
+}
+
 func main() {
 	padding := 3
 	t.Init(os.Stdout, 0, 0, padding, ' ', 0)
@@ -41,8 +47,37 @@ func main() {
 
 	switch v.Cmd.Do {
 	case "all", "list":
-		//listDev(v.Data.Devices)
-		listDev()
+/* do it like this instead
+		var r v.Rooms = v.Data.RoomList
+        listRoom(r.Match(secondArg()))
+*/
+
+ var d v.Devices = v.Data.DeviceList 
+ listDev(d.Matches(secondArg()))
+
+ /*
+ old device choice
+		r := v.Data.DeviceList
+		if  ! v.Empty(secondArg()) {
+			if isInt(secondArg()) {
+			// int means return room id
+				r = v.Data.DevsId(secondArg())
+			} else {
+			// string means pattern match
+				r = v.Data.DevsContainsName(secondArg())
+			}
+		}
+		listDev(r)
+		*/
+		/* 
+		if len(v.Cmd.Next) > 2 {
+			if !(v.Empty(v.Cmd.Next[2])) {
+				if isInt(v.Cmd.Next[2]) {
+				} else {
+			}
+			} //end of ! Empty(v.Cmd.Next)
+		}
+		*/
 	case "lock","unlock":
 		this:=v.Cmd.MakeUri()
 		if (v.Data.DevMatches(v.Cmd.Dev).CategoryNum == 7) { 
@@ -52,8 +87,13 @@ func main() {
 		}
 	case "on", "off","switch","toggle":
 		switchDev()
+		time.Sleep(time.Second * 4) 
+		v.RefreshAfterCommand()
+		r := v.Devices { v.Data.DevId(v.Cmd.Dev), }
+		listDev(r)
 	case "room", "rooms":
-		listRoom(v.Data.Rooms)
+		var r v.Rooms = v.Data.RoomList
+		listRoom(r.Match(secondArg()))
 	case "users", "user":
 		listUser(v.Data.Users)
 	case "scene", "scenes":
@@ -69,7 +109,7 @@ func main() {
 	}
 }
 
-func header(s string) {
+func printChoice(s string) {
 	if !v.BareOpt {
 		fmt.Fprintf(t, s)
 	}
@@ -87,48 +127,44 @@ func switchDev() error {
 	return nil
 }
 
-func listDev() {
-	r := v.Data.Devices
-	if len(v.Cmd.Next) > 2 {
-		if !(v.Empty(v.Cmd.Next[2])) {
-			if isInt(v.Cmd.Next[2]) {
-				r = v.Data.DevsId(v.Cmd.Next[2])
-			} else {
-				r = v.Data.DevsContainsName(v.Cmd.Next[2])
-			}
-		} //end of ! Empty(v.Cmd.Next)
-	}
-
+func listDev(r v.Devices) {
+	//r := v.Data.Devices
 	if len(r) > 0 {
-		header("ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
+		printChoice("ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
 	}
 	for _, v := range r {
-		fmt.Fprintf(t, "%v:\t%v\t%v\t%v\t%v\n", v.Id, v.Name, v.RoomName(), v.Category(), v.StatusTxt())
+		printChoice(mkstr("%v:\t", v.Id))
+		fmt.Fprintf(t, "%v\t",v.Name)
+		printChoice(mkstr("%v\t",v.RoomName()))
+		printChoice(mkstr("%v\t", v.Category()))
+		fmt.Fprintf(t,"%v\n", v.StatusTxt())
 	} //end range over d devices
 	t.Flush()
 }
 
-func listRoom(r v.RoomList) {
-	header("Room\tRoom Name\n-----\t---------\n")
-	for _, this := range r {
-		fmt.Fprintf(t, "%v:\t%v\n", this.Id, this.Name)
+func listRoom(r v.Rooms) {
+	printChoice("Room\tRoom Name\n-----\t---------\n")
+	for _, v := range r {
+		printChoice(mkstr("%v:\t", v.Id))
+		fmt.Fprintf(t, "%v\n", v.Name)
 	}
-	fmt.Fprintln(t, "\n")
 	t.Flush()
 }
 
 func listUser(r v.Users) {
-	header("ID\tUser\tType\n---\t----\t----\n")
-	for _, this := range r {
-		fmt.Fprintf(t, "%v\t%v\t%v\n", this.Id, this.Name, this.Level)
+	printChoice("ID\tUser\tType\n---\t----\t----\n")
+	for _, v := range r {
+		printChoice(mkstr("%v", v.Id))
+		fmt.Fprintf(t, "%v\t%v\n", v.Name, v.Level)
 	}
 	t.Flush()
 }
 
 func listScene(r v.Scenes) {
-	header("Scene\tName\tLast Run\n-----\t----\t--------\n")
-	for _, this := range r {
-		fmt.Fprintf(t, "%v:\t%v\t%v\n", this.Id, this.Name, this.LastRun())
+	printChoice("Scene\tName\tLast Run\n-----\t----\t--------\n")
+	for _, v := range r {
+		printChoice(mkstr("%v:\t", v.Id))
+		fmt.Fprintf(t, "%v\t%v\n", v.Name, v.LastRun())
 	}
 	t.Flush()
 }

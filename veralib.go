@@ -35,7 +35,7 @@ var CatNames = []string{"", "NA Interface", "Dimmable_Light", "Switch", "Securit
 var Data VeraRoot
 var Xml []byte
 
-func Populate () { 
+func Populate () {
 	err := xml.Unmarshal(Xml, &Data)
 	if err != nil { ErrorExit(mkstr("Error getting xml root data %v",err),1) }
 	return
@@ -44,19 +44,76 @@ func Populate () {
 type VeraRoot struct {
 	XMLName          xml.Name `xml:"root"`
 	Timezone         string   `xml:"timezone,attr"`
-	FirmwareVersion string   `xml:"firmware_version,attr"`
-	CityDescription string   `xml:"City_description,attr"`
+	FirmwareVersion string    `xml:"firmware_version,attr"`
+	CityDescription string    `xml:"City_description,attr"`
 	Model            string   `xml:"model,attr"`
-	Devices          []Device `xml:"devices>device"`
+	DeviceList          []Device `xml:"devices>device"`
 	Scenes           []Scene  `xml:"scenes>scene"`
 	Users            []User   `xml:"users>user"`
-	Rooms            []Room   `xml:"rooms>room"`
+	RoomList            []Room   `xml:"rooms>room"`
 }
 
-type DeviceList []Device
-type RoomList []Room
+type Devices []Device
+type Rooms []Room
 type Users []User
 type Scenes []Scene
+
+func (l Rooms) Match(match string) (r Rooms)  { 
+    if _ , err := strconv.Atoi(match); err == nil {
+		// int room id, return a match
+		for _, v := range l { 
+			if v.Id == match {
+				r = append(r,v)
+			   return r 
+			}
+		}
+		ErrorExit(mkstr("No matching room: %v",match),1) 
+		return r 
+	} else { 
+		//return room with matching Name
+		for _, v := range l { 
+			if (strings.ToUpper(v.Name)==strings.ToUpper(match)) {
+				r = append(r,v)
+			   return r
+			}
+		}
+		return  r 
+}
+}
+func (l Devices) Matches ( match string ) (d Devices) { 
+    if _, err := strconv.Atoi(match); err == nil {
+		//look for Int Dev ID
+	} else { 
+		for _, this := range l { 
+			if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
+				   d = append(d,this)
+			}
+		}
+		return d
+	}
+	ErrorExit(mkstr("No matching device: %v",match),1) 
+	return d
+}
+
+func (l Devices) Match(match string) (d Device) { 
+    if _, err := strconv.Atoi(match); err == nil {
+		// match int dev num
+		for _, v := range l {
+			c,_:= strconv.Atoi(match)
+			if v.Id==c  {
+				return v
+			}
+		} 
+	} else { 
+		//return first matching name 
+		for _, v := range l { 
+			if (strings.ToUpper(v.Name)==strings.ToUpper(match)) {
+				return v
+			} 
+		}//end of range over l 
+	} //end of if int
+	return d
+}
 
 func (l VeraRoot) DevMatches(match string) (d Device) { 
     if _, err := strconv.Atoi(match); err == nil {
@@ -69,11 +126,11 @@ func (l VeraRoot) DevMatches(match string) (d Device) {
 	ErrorExit(mkstr("No matching device: %v",match),1) 
 	return d
 }
+
 func (l VeraRoot) DevMatchesName(match string) (d Device) { 
-	for _, this := range l.Devices { 
-		if (strings.ToUpper(this.Name)==strings.ToUpper(match)) {
-	       d = this
-		   return d
+	for _, v := range Data.DeviceList { 
+		if (strings.ToUpper(v.Name)==strings.ToUpper(match)) {
+		   return v
 		}
 	}
 	ErrorExit(mkstr("No matching device: %v",match),1) 
@@ -81,46 +138,46 @@ func (l VeraRoot) DevMatchesName(match string) (d Device) {
 }
 
 func (l VeraRoot) DevId(id string) (d Device) { 
-	for _, this := range Data.Devices {
+	for _, v := range Data.DeviceList {
 		c,_:= strconv.Atoi(id)
-		if this.Id==c  {
-			return this
+		if v.Id==c  {
+			return v
 		}
 	}
 	return d
 }
 
-func (l VeraRoot) DevsContainsName(match string) (r DeviceList) { 
-	for _, this := range l.Devices { 
-		if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
-	       r = append(r,this)
+func (l VeraRoot) DevsContainsName(match string) (r Devices) { 
+	for _, v := range l.DeviceList { 
+		if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+	       r = append(r,v)
 		}
 	}
 	return r
 }
 
 func (l VeraRoot) DevContainsName(match string) (d Device) { 
-	for _, this := range l.Devices { 
-		if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
-	       return this
+	for _, v := range l.DeviceList { 
+		if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+	       return v
 		}
 	}
 	return  d 
 }
-func (l VeraRoot) DevsId(id string) ( d DeviceList ) { 
-	for _, this := range Data.Devices {
+func (l VeraRoot) DevsId(id string) ( d Devices ) { 
+	for _, v := range Data.DeviceList {
 		c,_:= strconv.Atoi(id)
-		if this.Id==c  {
-			d=append(d,this)
+		if v.Id==c  {
+			d=append(d,v)
 		}
 	}
 	return d
 }
 
 func (d Device) RoomName() string {
-	for _, this := range Data.Rooms {
-		if this.Id == d.RoomNum {
-			return this.Name
+	for _, v := range Data.RoomList {
+		if v.Id == d.RoomNum {
+			return v.Name
 		}
 	}
 	return ""
@@ -178,14 +235,15 @@ func (d Device) Category() string {
 	return CatNames[d.CategoryNum]
 }
 
-func (d Device) value(V string) (r string) {
-	for _, this := range d.States {
-		if this.Variable == V {
-			return this.Value
+func (d Device) value (V string) (r string) {
+	for _, v := range d.States {
+		if v.Variable == V {
+			return v.Value
 		}
 	}
 	return ""
 }
+
 func (d Device) Value() (string) { 
 	switch d.CategoryNum {
 	case 2: //dimmable light

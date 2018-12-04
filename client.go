@@ -15,7 +15,9 @@ var err error
 func (c cfgType) NeedRefresh() bool {
 	Xml,err=ReadCache()
 	if err != nil { return true  }
-    if RefreshOpt  { return true }
+    if RefreshOpt  { 
+		return true 
+	}
     if  ( ! RefreshOpt && 
 		 (Cmd.Do=="all"||
 		 Cmd.Do=="list"||
@@ -26,19 +28,25 @@ func (c cfgType) NeedRefresh() bool {
      }
      return true
 }
+func RefreshAfterCommand() { 
+		RefreshOpt = true
+		DoRefresh()
+		Populate()
+		WriteCfg()
+}
 
-func DoRefresh() { 
-	if Cfg.NeedRefresh() { 
+func DoRefresh() {
+	if Cfg.NeedRefresh() {
 		var c CmdType
 			c.Uri=mkstr("http://%v:%v/data_request?id=user_data&output_format=xml&ns=1",Cfg.Host,Cfg.Port)
-			c.Do="list" 
-			c.Fetch() 
+			c.Do="list"
+			c.Fetch()
 	}
-	err := Cmd.WriteTemp(Xml)                                                                              
-    if err != nil {                                                                                           
-        ErrorExit(mkstr("Error writing temp data %v", err), 1)                                              
-    }                                                                                                         
-} 
+	err := Cmd.WriteTemp(Xml)
+    if err != nil {
+        ErrorExit(mkstr("Error writing temp data %v", err), 1)
+    }
+}
 
 func (c CmdType) MakeUri() CmdType {
 	switch c.Do {
@@ -53,7 +61,6 @@ func (c CmdType) MakeUri() CmdType {
 			if Empty(c.Value) { ErrorExit("Missing device value",1) }
 			c.Uri=mkstr("http://%v:%v/data_request?id=action&output_format=xml&DeviceNum=%v&serviceId=urn:upnp-org:serviceId:SwitchPower1&action=SetTarget&newTargetValue=%v", Cfg.Host,Cfg.Port,c.Dev,c.Value )
 		case  "lock", "unlock":  //toggle a device 
-			DPause(mkstr("This is %v",c.Uri))
 			if Empty(c.Dev) { ErrorExit("Missing device number",1) }
 				if len(Cmd.Next) > 2 {
 					if !(Empty(Cmd.Next[2])) {
