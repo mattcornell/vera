@@ -78,17 +78,32 @@ func (l Rooms) Match(match string) (r Rooms)  {
 			}
 		}
 		return  r 
+	}
 }
+
+func (l Rooms) Matches(match string) (r Rooms)  { 
+		if _ , err := strconv.Atoi(match); err == nil {
+			return  l.Match(match)
+		} else { 
+		//return room with matching Name
+		for _, v := range l { 
+			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+				r = append(r,v)
+			}
+		}
+		return  r
+	}
 }
+
 func (l Devices) Matches ( match string ) (d Devices) { 
     if _, err := strconv.Atoi(match); err == nil {
 		found:=l.Match(match)
 		return append(d,found)
 	
 	} else { 
-		for _, this := range l { 
-			if (strings.Contains(strings.ToUpper(this.Name),strings.ToUpper(match)) ){ 
-				   d = append(d,this)
+		for _, v := range l { 
+			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+				   d = append(d,v)
 			}
 		}
 		return d
@@ -119,24 +134,14 @@ func (l Devices) Match(match string) (d Device) {
 	return d
 }
 
-func (l VeraRoot) DevId(id string) (d Device) { 
-	for _, v := range Data.DeviceList {
-		c,_:= strconv.Atoi(id)
-		if v.Id==c  {
-			return v
-		}
-	}
-	return d
-}
-
-func (d Device) RoomName() string {
+func (d * Device) RoomName() string {
 	for _, v := range Data.RoomList {
-		if v.Id == d.RoomNum {
-			return v.Name
+		if v.Id == d.RoomNum { return v.Name
 		}
 	}
 	return ""
 }
+
 
 type Room struct {
 	XMLName xml.Name `xml:"room"`
@@ -314,13 +319,15 @@ type State struct {
 	Id       string   `xml:"value,id"`
 }
 
-
-
-func GetRoot(byteIn []byte) (x VeraRoot, err error) {
+/* 
+func GetRoot(byteIn []byte) (x * VeraRoot, err error) {
 	err = xml.Unmarshal(byteIn, &x)
 	return
 }
+*/
+
 // end of matt library type functions
+
 func OpenFile (f string) (b []byte, err error) {
     defer DTook(time.Now(),"open verafile")
     x,err := os.Open(f)
