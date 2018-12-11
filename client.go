@@ -1,4 +1,4 @@
-package vera 
+package vera
 // get data from cache file or netClient  
 import (
 	"net/http"
@@ -13,12 +13,16 @@ import (
 var err error
 
 func (c cfgType) NeedRefresh() bool {
-    if RefreshOpt  { 
-		return true 
+    if OfflineOpt  {
+		Xml,err=ReadCache()
+		if err != nil { return true  }
+	}
+    if RefreshOpt  {
+		return true
 	}
 	Xml,err=ReadCache()
 	if err != nil { return true  }
-    if  ( ! RefreshOpt && 
+    if  ( ! RefreshOpt &&
 		 /*(Cmd.Do=="all"||
 		 Cmd.Do=="list"||
 		 Cmd.Do=="details"||

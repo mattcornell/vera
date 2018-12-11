@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"text/tabwriter"
 	"time"
+//	"github.com/pkg/profile"
 )
 
 var (
@@ -29,26 +30,24 @@ var t = new(tabwriter.Writer)
 //var Root v.VeraRoot
 
 func main() {
-	padding := 3
-	t.Init(os.Stdout, 0, 0, padding, ' ', 0)
+	//defer profile.Start().Stop()
+//	defer profile.Start(profile.MemProfile).Stop()
+	t.Init(os.Stdout, 0, 0, 3, ' ', 0)
 
 	v.GetOptions()
-	v.DMemPause("GetOptions")
 	v.ReadCfg()
-	v.DMemPause("ReadCfg")
 	v.DoRefresh()
-	v.DMemPause("DoRefresh")
 	v.Populate()
 	v.DMemPause("Populate")
 	v.WriteCfg()
 
 	switch v.Cmd.Do {
 	case "all", "list":
-	    var d v.Devices = v.Data.DeviceList 
+	    var d * v.Devices = &v.Data.DeviceList
 	    listDev(d.Matches(v.SecondArg()))
 	case "lock","unlock":
 		this:=v.Cmd.MakeUri()
-	    var d v.Devices = v.Data.DeviceList 
+	    var d * v.Devices = &v.Data.DeviceList 
 		if (d.Match(v.Cmd.Dev).CategoryNum == 7) { 
 			this.Fetch()
 		} else { 
@@ -59,16 +58,17 @@ func main() {
 		switchDev()
 		time.Sleep(time.Second * 4) 
 		v.RefreshAfterCommand()
-		var d v.Devices = v.Data.DeviceList 
+		var d * v.Devices = &v.Data.DeviceList 
 		print(mkstr("%v\n",d.Match(v.Cmd.Dev).Value()))
 		r := v.Devices { d.Match(v.Cmd.Dev), }
 		listDev(r)
 	case "room", "rooms":
-		var r v.Rooms = v.Data.RoomList
+		var r * v.Rooms = & v.Data.RoomList
 		if ! v.Empty(v.SecondArg()){ 
-			r=r.Matches(v.SecondArg())
-		} 
-		listRoom(r)
+			listRooms(r.Matches(v.SecondArg()))
+		}  else  { 
+			listRooms(* r)
+		}
 	case "users", "user":
 		listUser(v.Data.Users)
 	case "scene", "scenes":
@@ -85,7 +85,6 @@ func main() {
 			print(mkstr("%v\n",d.Match(v.Cmd.Dev).StatusTxt()))
 		}
 	}
-	v.DMemPause("end")
 }
 
 func printChoice(n int, s string) {
@@ -106,20 +105,21 @@ func switchDev() error {
 	return nil
 }
 
-func listDev(r v.Devices) {
+func listDev( r v.Devices) {
 	//r := v.Data.Devices
 		printChoice(len(r),"ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
-	for _, v := range r {
-		printChoice(len(r),mkstr("%v:\t", v.Id))
-		fmt.Fprintf(t, "%v\t",v.Name)
-		printChoice(len(r),mkstr("%v\t",v.RoomName()))
-		printChoice(len(r),mkstr("%v\t", v.Category()))
-		fmt.Fprintf(t,"%v\n", v.StatusTxt())
+	v.DMemPause("list Dev ")
+	for _, val := range r {
+		printChoice(len(r),mkstr("%v:\t", val.Id))
+		fmt.Fprintf(t, "%v\t",val.Name)
+		printChoice(len(r),mkstr("%v\t", val.RoomName()))
+		printChoice(len(r),mkstr("%v\t", * val.Category()))
+		fmt.Fprintf(t,"%v\n", val.StatusTxt())
 	} //end range over d devices
 	t.Flush()
 }
 
-func listRoom(r v.Rooms) {
+func listRooms(r v.Rooms) {
 	printChoice(len(r),"Room\tRoom Name\n-----\t---------\n")
 	for _, v := range r {
 		printChoice(len(r),mkstr("%v:\t", v.Id))

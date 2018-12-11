@@ -15,9 +15,10 @@ var	DebugTime   = time.Now()
 var DPause = dPause
 
 func bToMb(b uint64) uint64 {
-    return b / 1024 / 1024
+    //return b / 1024 / 1024
+    return b / 1024
 }
-func DMemPause(msg string) { 
+func DMemPause(msg string) {
 	if DebugOpt {
         var m runtime.MemStats
         runtime.ReadMemStats(&m)

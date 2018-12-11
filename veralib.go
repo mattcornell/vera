@@ -47,10 +47,10 @@ type VeraRoot struct {
 	FirmwareVersion string    `xml:"firmware_version,attr"`
 	CityDescription string    `xml:"City_description,attr"`
 	Model            string   `xml:"model,attr"`
-	DeviceList          []Device `xml:"devices>device"`
+	DeviceList        Devices `xml:"devices>device"`
 	Scenes           []Scene  `xml:"scenes>scene"`
 	Users            []User   `xml:"users>user"`
-	RoomList            []Room   `xml:"rooms>room"`
+	RoomList            Rooms   `xml:"rooms>room"`
 }
 
 type Devices []Device
@@ -81,13 +81,13 @@ func (l Rooms) Match(match string) (r Rooms)  {
 	}
 }
 
-func (l Rooms) Matches(match string) (r Rooms)  { 
+func (l Rooms) Matches(match string) (r Rooms)  {
 		if _ , err := strconv.Atoi(match); err == nil {
 			return  l.Match(match)
-		} else { 
+		} else {
 		//return room with matching Name
-		for _, v := range l { 
-			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+		for _, v := range l {
+			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){
 				r = append(r,v)
 			}
 		}
@@ -95,24 +95,25 @@ func (l Rooms) Matches(match string) (r Rooms)  {
 	}
 }
 
-func (l Devices) Matches ( match string ) (d Devices) { 
+func (l * Devices) Matches ( match string ) (d Devices) {
     if _, err := strconv.Atoi(match); err == nil {
 		found:=l.Match(match)
 		return append(d,found)
-	
-	} else { 
-		for _, v := range l { 
-			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){ 
+	} else {
+		for _, v := range *l {
+			if (strings.Contains(strings.ToUpper(v.Name),strings.ToUpper(match)) ){
 				   d = append(d,v)
 			}
 		}
 		return d
 	}
-	ErrorExit(mkstr("No matching device: %v",match),1) 
+	ErrorExit(mkstr("No matching device: %v",match),1)
 	return d
 }
 
-func (l Devices) Match(match string) (d Device) { 
+func (l Devices) Match(match string) (d Device) {
+	DWhatsThis(l)
+	DPause("whats this\n")
     if _, err := strconv.Atoi(match); err == nil {
 		// match int dev num
 		for _, v := range l {
@@ -120,26 +121,25 @@ func (l Devices) Match(match string) (d Device) {
 			if v.Id==c  {
 				return v
 			}
-		} 
-		ErrorExit(mkstr("No matching device: %v",match),1) 
-	} else { 
+		}
+		ErrorExit(mkstr("No matching device: %v",match),1)
+	} else {
 		//return first matching name 
-		for _, v := range l { 
+		for _, v := range l {
 			if (strings.ToUpper(v.Name)==strings.ToUpper(match)) {
 				return v
-			} 
+			}
 		}//end of range over l 
 	} //end of if int
-	ErrorExit(mkstr("No matching device: %v",match),1) 
+	ErrorExit(mkstr("No matching device: %v",match),1)
 	return d
 }
 
-func (d * Device) RoomName() string {
+func (d * Device) RoomName() (r string ){
 	for _, v := range Data.RoomList {
-		if v.Id == d.RoomNum { return v.Name
-		}
+		if v.Id == d.RoomNum { return v.Name }
 	}
-	return ""
+	return r
 }
 
 
@@ -172,12 +172,11 @@ type Scene struct {
 	Trigger           Trigger  `xml:"triggers>trigger"`
 }
 
-func epochDate(s int64) string { 
-	t:= time.Unix(s,0).Format(dateNice)
-   return t
+func epochDate(s int64) string {
+   return time.Unix(s,0).Format(dateNice)
 }
 
-func (s Scene) LastRun () string{ 
+func (s Scene) LastRun () string{
 	//return  mkstr("%s",time.Unix(s.RawLastRun,0))
 	return  epochDate(s.RawLastRun)
 }
@@ -191,8 +190,8 @@ type Trigger struct {
 }
 
 //method
-func (d Device) Category() string {
-	return CatNames[d.CategoryNum]
+func (d Device) Category() * string {
+	return & CatNames[d.CategoryNum]
 }
 
 func (d Device) value (V string) (r string) {
@@ -204,12 +203,12 @@ func (d Device) value (V string) (r string) {
 	return ""
 }
 
-func (d Device) Value() (string) { 
+func (d Device) Value() (string) {
 	switch d.CategoryNum {
 	case 2: //dimmable light
 		return d.value("LoadLevelStatus")
 	case 3: //lights, switches
-		return d.value("Target") 
+		return d.value("Target")
 	case 4: // security device (motion, window sensor)
 		return d.value("Armed")
 	case 5: //HVAC
@@ -217,9 +216,9 @@ func (d Device) Value() (string) {
 	case 6: //cameras
 		return "" //just null out the status
 	case 7: // door lock
-		return d.value("Status") 
+		return d.value("Status")
 	case 11: // Generic IO
-		return d.value("ArmedTripped") 
+		return d.value("ArmedTripped")
 	case 14: // remote controller
 		return ""  //TODO, return battery level? Last seen?
 	case 16: // humidity level

@@ -35,7 +35,7 @@ func SecondArg() (r string) {
 }
 
 var (
-	HelpOpt, BareOpt, InfoOpt, RefreshOpt, UpdateOpt bool 
+	HelpOpt, BareOpt, InfoOpt, OfflineOpt, RefreshOpt, UpdateOpt bool 
 )
 
 func isInt(s string) bool {
@@ -56,6 +56,9 @@ func GetOptions() {
     flag.BoolVar(&UpdateOpt, "U", false, "Check for an updated version ")
     flag.BoolVar(&UpdateOpt, "u", false, "Check for an updated version ")
     flag.BoolVar(&UpdateOpt, "update", false, "Check for an updated version")
+    flag.BoolVar(&OfflineOpt, "O", false, "Offline, use the cache file ")
+    flag.BoolVar(&OfflineOpt, "o", false, "Offline, use the cache file")
+    flag.BoolVar(&OfflineOpt, "offline", false, "Offline, use the cache fil")
     flag.BoolVar(&RefreshOpt, "R", false, "Force a refresh of cached data")
     flag.BoolVar(&RefreshOpt, "r", false, "Force a refresh of cached data")
     flag.BoolVar(&RefreshOpt, "refresh", false, "Force a refresh of cached data")

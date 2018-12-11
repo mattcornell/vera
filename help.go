@@ -11,7 +11,7 @@ import (
 )
 
 const (
-helpMsg = `
+/* helpMsg = `
 ###i### -------------------------------------------------
 ###v### date: 2018-11-09_100434
 ###i### https://teamcornell.com/code/vera/
@@ -34,7 +34,7 @@ helpMsg = `
 ###h###    
 ###i###	help - this output
 ###i###	info - this output (but more)
-###i###	list [device_number|name|pattern] - list device(s)
+###i###	list [device_nubmer|name|grep string] - list device(s)
 ###i###	room[s] [roomnumber] - list rooms 
 ###i###	scene[s] [scenenumber] - list scenes 
 ###i###	refresh - poll the zwave network for changes 
@@ -71,7 +71,10 @@ helpMsg = `
 ###i###   ./vera on 10 # turn on switch that is device num 10
 ###i###   ./vera dim 33 10  # Set dimmable light device 33 to 10 
 ###i###`
+*/
+helpMsg=`this is the help`
 )
+
 func configQuit(m string) {
 	if ! Empty(m) { errOut(mkstr("\n vera: %v",m)) }
     reg, err := regexp.Compile(`###h?i###(.*)\r?\n`)
