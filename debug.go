@@ -12,7 +12,7 @@ var DebugOpt bool
 var DOut io.Writer = ioutil.Discard
 var	DebugTime   = time.Now()
 
-var DPause = dPause
+//var DPause = dPause
 
 func bToMb(b uint64) uint64 {
     //return b / 1024 / 1024
@@ -35,7 +35,7 @@ func DMemPause(msg string) {
 }
 
 
-func dPause(this string) {
+func DPause(this string) {
 	if DebugOpt {
 		fmt.Fprintf(DOut, "%v", this)
 		var answer string

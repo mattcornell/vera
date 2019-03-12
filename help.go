@@ -13,7 +13,7 @@ import (
 const (
 /* helpMsg = `
 ###i### -------------------------------------------------
-###v### date: 2018-11-09_100434
+###v### date: 2019-03-11_100434
 ###i### https://teamcornell.com/code/vera/
 ###v### by: matt@teamcornell.com
 ###i### vera

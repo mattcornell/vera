@@ -76,7 +76,6 @@ func GetOptions() {
         DOut = os.Stderr
         DMsg("Debug Enabled\n")
     }
-
     if (len(os.Args) > 1) && (len(flag.Args()) > 0) && (len(flag.Args()[0]) > 0) {
 		Cmd.Do = flag.Args()[0]
 		for _,v := range flag.Args() { 
@@ -85,30 +84,33 @@ func GetOptions() {
 		if ! Empty(Cmd.Next[1]) { 
 			switch Cmd.Next[1]  { 
 			case "on":
-				if Empty ( Cmd.Next[2] ){ 
-					HelpQuit("on command needs a device number")
+				DWhatsThis(len(Cmd.Next))
+				if (len(Cmd.Next)<3) || Empty(Cmd.Next[2]){ 
+					HelpQuit("on command needs a device number\n")
 				}
 				Cmd.Dev = Cmd.Next[2]
 				Cmd.Value = "1"
 			case "off":
-				if Empty ( Cmd.Next[2] ){ 
+				if (len(flag.Args())<2) || Empty(Cmd.Next[2] ){ 
 					HelpQuit("off command needs a device number")
 				}
 				Cmd.Dev = Cmd.Next[2]
 				Cmd.Value = "off"
 			case "dim":
-				if Empty ( Cmd.Next[2] ) || Empty(Cmd.Next[3]){ 
-					HelpQuit("dim command needs a device number and intesity value")
+				if (len(flag.Args())<2) || Empty (Cmd.Next[2]) || Empty(Cmd.Next[3]){ 
+					HelpQuit("dim command needs a device number and intesity value\n")
 				}
+					HelpQuit("dim command needs a device number and intesity value\n")
 				Cmd.Dev = Cmd.Next[2]
 				Cmd.Value = Cmd.Next[3]
 			case "toggle","switch", "lock", "unlock","status","value":
-			   if len(Cmd.Next) > 2 {                                                                        
+			   if len(Cmd.Next) > 2 {
 					if Empty ( Cmd.Next[2] ){ 
-						HelpQuit(mkstr("command %v needs a device name or number",Cmd.Do))
+						HelpQuit(mkstr("command %v needs a device name or number\n",Cmd.Do))
 					}
 				}
 				Cmd.Dev = Cmd.Next[2]
+			case "scene","scenes":
 			}
 		}
     } else {

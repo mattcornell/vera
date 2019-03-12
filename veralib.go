@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"os"
 	"io/ioutil"
-	"time"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Empty(object interface{}) bool {
-    //First check normal definitions of empty
-	//return true
-    if object == nil {
+	if &object == nil { 
+		return true 
+	}
+	if object == nil  {
         return true
     } else if object == "" {
         return true
@@ -36,27 +37,69 @@ var Data VeraRoot
 var Xml []byte
 
 func Populate () {
-	err := xml.Unmarshal(Xml, &Data)
-	if err != nil { ErrorExit(mkstr("Error getting xml root data %v",err),1) }
+	 err := xml.Unmarshal(Xml, &Data)
+	if Cmd.Do != "scene" && Cmd.Do != "scenes" && err != nil { ErrorExit(mkstr("Error getting xml root data %v",err),1) }
+	
+	//_ = xml.Unmarshal(Xml, &Data)
 	return
 }
 
 type VeraRoot struct {
 	XMLName          xml.Name `xml:"root"`
 	Timezone         string   `xml:"timezone,attr"`
-	FirmwareVersion string    `xml:"firmware_version,attr"`
-	CityDescription string    `xml:"City_description,attr"`
+	FirmwareVersion  string    `xml:"firmware_version,attr"`
+	CityDescription  string    `xml:"City_description,attr"`
 	Model            string   `xml:"model,attr"`
-	DeviceList        Devices `xml:"devices>device"`
+	DeviceList       Devices `xml:"devices>device"`
 	Scenes           []Scene  `xml:"scenes>scene"`
 	Users            []User   `xml:"users>user"`
 	RoomList            Rooms   `xml:"rooms>room"`
 }
 
+type Scenes []Scene
+
+type Scene struct {
+	XMLName           xml.Name `xml:"scene"`
+	Id                string      `xml:"id,attr"`
+	Timestamps        int64    `xml:"Timestamp,attr"`
+	Name              string   `xml:"name,attr"`
+	Room              string   `xml:"room,attr"`
+	TriggersOperator string   `xml:"triggers_operator,attr"`
+	users             string   `xml:"users,attr"`
+	Paused            string   `xml:"paused,attr"`
+	ModeStatus        string      `xml:"modeStatus,attr"`
+	RawLastRun        int64    `xml:"last_run,attr"`
+	Trigger           Trigger  `xml:"triggers>trigger"`
+/* matt
+Text             string `xml:",chardata"`
+Timestamp        string `xml:"Timestamp,attr"`
+Name             string `xml:"name,attr"`    
+Room             string `xml:"room,attr"`
+TriggersOperator string `xml:"triggers_operator,attr"`
+Users            string `xml:"users,attr"`
+Paused           string `xml:"paused,attr"`
+ModeStatus       string `xml:"modeStatus,attr"`
+Lua              string `xml:"lua,attr"`
+EncodedLua       string `xml:"encoded_lua,attr"` 
+ID               string `xml:"id,attr"`
+LastRun          string `xml:"last_run,attr"`
+
+matt */
+
+}
 type Devices []Device
 type Rooms []Room
 type Users []User
-type Scenes []Scene
+
+func (r Room) Match(match string) (bool)  { 
+    if _ , err := strconv.Atoi(match); err == nil {
+		// int room id, return a match
+			if r.Id == match {
+				return true
+			}
+		}
+	return false
+}
 
 func (l Rooms) Match(match string) (r Rooms)  { 
     if _ , err := strconv.Atoi(match); err == nil {
@@ -158,19 +201,6 @@ type User struct {
 	Level   int      `xml:"Level,attr"`
 }
 
-type Scene struct {
-	XMLName           xml.Name `xml:"scene"`
-	Id                int      `xml:"id,attr"`
-	Timestamps        int64    `xml:"Timestamp,attr"`
-	Name              string   `xml:"name,attr"`
-	Room              string   `xml:"room,attr"`
-	TriggersOperator string   `xml:"triggers_operator,attr"`
-	users             string   `xml:"users,attr"`
-	Paused            string   `xml:"paused,attr"`
-	ModeStatus        int      `xml:"modeStatus,attr"`
-	RawLastRun        int64    `xml:"last_run,attr"`
-	Trigger           Trigger  `xml:"triggers>trigger"`
-}
 
 func epochDate(s int64) string {
    return time.Unix(s,0).Format(dateNice)
