@@ -58,7 +58,7 @@ func main() {
 		v.WriteCfg()
 	case "on", "off", "switch", "toggle":
 		switchDev()
-		time.Sleep(time.Second * 4)
+		time.Sleep(time.Second * 2)
 		v.RefreshAfterCommand()
 		var d *v.Devices = &v.Data.DeviceList
 		print(mkstr("%v\n", d.Match(v.Cmd.Dev).Value()))
@@ -110,29 +110,12 @@ func isInt(s string) bool {
 	return false
 }
 
-func switchDev() error {
+func switchDev() {
 	v.Cmd.MakeUri().Fetch()
-	return nil
+	return 
 }
 
-func listDevsFromRoom(room v.Room,d v.Devices) {
-	printChoice(1, mkstr("\nRoom: %v\n\n",room.Name)) 
-		printChoice(len(room.Name), "ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
-		v.DMemPause("list Dev From Room")
-		for _, val := range d {
-			//if (val.Id == thisroom.Id) { 
-			if room.Match(val.RoomNum){
-				printChoice(len(room.Name), mkstr("%v:\t", val.Id))
-				fmt.Fprintf(t, "%v\t", val.Name)
-				printChoice(len(room.Name), mkstr("%v\t", val.RoomName()))
-				printChoice(len(room.Name), mkstr("%v\t", *val.Category()))
-				fmt.Fprintf(t, "%v\n", val.StatusTxt())
-			}
-		} //end range over d devices
-		t.Flush()
-}
 func listDev(r v.Devices) {
-	//r := v.Data.Devices
 	printChoice(len(r), "ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
 	v.DMemPause("list Dev ")
 	for _, val := range r {
@@ -154,6 +137,23 @@ func listRooms(r v.Rooms) {
 	t.Flush()
 }
 
+func listDevsFromRoom(room v.Room,d v.Devices) {
+	printChoice(1, mkstr("\nRoom: %v\n\n",room.Name)) 
+		printChoice(len(room.Name), "ID\tName\tRoom\tType\tStatus\n---\t----\t----\t----\t------\n")
+		v.DMemPause("list Dev From Room")
+		for _, val := range d {
+			//if (val.Id == thisroom.Id) { 
+			if room.Match(val.RoomNum){
+				printChoice(len(room.Name), mkstr("%v:\t", val.Id))
+				fmt.Fprintf(t, "%v\t", val.Name)
+				printChoice(len(room.Name), mkstr("%v\t", val.RoomName()))
+				printChoice(len(room.Name), mkstr("%v\t", *val.Category()))
+				fmt.Fprintf(t, "%v\n", val.StatusTxt())
+			}
+		} //end range over d devices
+		t.Flush()
+} //end of listDevsFromRoom
+
 func listUser(r v.Users) {
 	printChoice(len(r), "ID\tUser\tType\n---\t----\t----\n")
 	for _, v := range r {
@@ -164,10 +164,10 @@ func listUser(r v.Users) {
 }
 
 func listScene(r v.Scenes) {
-	printChoice(len(r), "Scene\tName\tPaused\tLast Run\n-----\t----\t----\t--------\n")
+	printChoice(len(r), "Scene\tName\tStatus\tLast Run\n-----\t----\t----\t--------\n")
 	for _, v := range r {
 		printChoice(len(r), mkstr("%v:\t", v.Id))
-		fmt.Fprintf(t, "%v\t%v\t%v\n", v.Name, v.Paused, v.LastRun())
+		fmt.Fprintf(t, "%v\t%v\t%v\n", v.Name, v.PauseState(), v.LastRun())
 
 	}
 	t.Flush()

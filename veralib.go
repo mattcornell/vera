@@ -206,6 +206,15 @@ func epochDate(s int64) string {
    return time.Unix(s,0).Format(dateNice)
 }
 
+func (s Scene) PauseState() string{
+	//return  mkstr("%s",time.Unix(s.RawLastRun,0))
+	if (s.Paused == "0") { 
+		return "On"
+	}else { 
+		return "Off"
+	}
+	return  epochDate(s.RawLastRun)
+}
 func (s Scene) LastRun () string{
 	//return  mkstr("%s",time.Unix(s.RawLastRun,0))
 	return  epochDate(s.RawLastRun)

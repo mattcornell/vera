@@ -33,6 +33,7 @@ func (c cfgType) NeedRefresh() bool {
      return true
 }
 func RefreshAfterCommand() { 
+	DPause("feed me \n")
 		RefreshOpt = true
 		DoRefresh()
 		Populate()
